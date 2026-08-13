@@ -1,0 +1,2062 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BikinCV by Tama — Pembuat CV Ramah ATS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1B22;
+  --graphite:#4A5C64;
+  --mist:#DCE4E3;
+  --panel:#FFFFFF;
+  --line:#C3D0CF;
+  --signal:#0F6E68;
+  --signal-soft:#E3F0EE;
+  --warn:#9A5B00;
+  --warn-soft:#FBEEDA;
+  --alarm:#A32232;
+  --alarm-soft:#F8E4E6;
+  --disp:"Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --body:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --doc:#1F3B73;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--mist);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+/* ---------- header ---------- */
+.bar{
+  position:sticky;top:0;z-index:40;
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:10px 18px;
+  background:var(--ink);color:#EAF1F0;
+  border-bottom:3px solid var(--signal);
+}
+.brand{display:flex;align-items:baseline;gap:9px;font-family:var(--disp);font-weight:700;letter-spacing:-.02em;font-size:18px}
+.brand span{font-family:var(--mono);font-weight:400;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#7FB3AE}
+
+/* signature: graduated completeness scale */
+.gauge{flex:1 1 240px;min-width:200px;max-width:520px}
+.gauge-top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8FA7A5;margin-bottom:4px}
+.gauge-top b{color:#EAF1F0;font-weight:500}
+.scale{display:flex;gap:2px;height:16px;align-items:stretch}
+.tick{flex:1;background:#233541;border-bottom:2px solid #33474F;position:relative;transition:background .25s,border-color .25s}
+.tick.on{background:var(--signal);border-bottom-color:#4FBFB6}
+.tick.part{background:#1D4E4A;border-bottom-color:var(--signal)}
+.bar-actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+
+/* ---------- buttons ---------- */
+.btn{
+  border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  padding:7px 13px;border-radius:2px;cursor:pointer;
+  font-family:var(--mono);font-size:12px;letter-spacing:.03em;
+  transition:background .15s,border-color .15s,transform .05s;
+}
+.btn:hover{background:var(--signal-soft);border-color:var(--signal)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--signal);border-color:var(--signal);color:#fff}
+.btn.primary:hover{background:#0B5B56}
+.btn.ghost{background:transparent;border-color:#3B4F58;color:#DCE7E6}
+.btn.ghost:hover{background:#1B2C35;border-color:var(--signal)}
+.btn.tiny{padding:3px 8px;font-size:11px}
+.btn.danger{color:var(--alarm);border-color:#E3C2C7}
+.btn.danger:hover{background:var(--alarm-soft);border-color:var(--alarm)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:minmax(380px,1fr) minmax(420px,1.05fr);gap:0;align-items:start}
+.editor{padding:18px;border-right:1px solid var(--line);min-height:calc(100vh - 62px)}
+.stage{padding:18px;position:sticky;top:62px;max-height:calc(100vh - 62px);overflow:auto}
+
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+.tab{
+  border:0;background:transparent;padding:9px 14px;cursor:pointer;
+  font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--graphite);
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--signal)}
+.pane[hidden]{display:none}
+
+/* ---------- checklist ---------- */
+.checklist{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:6px;margin-bottom:22px}
+.chk{
+  display:flex;align-items:center;gap:9px;padding:8px 10px;
+  background:var(--panel);border:1px solid var(--line);border-radius:2px;cursor:pointer;
+  font-size:13px;transition:border-color .15s,background .15s;
+}
+.chk:hover{border-color:var(--signal)}
+.chk input{accent-color:var(--signal);width:15px;height:15px;margin:0}
+.chk .num{font-family:var(--mono);font-size:10px;color:var(--graphite)}
+.chk.active{background:var(--signal-soft);border-color:var(--signal)}
+
+/* ---------- cards / forms ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:2px;margin-bottom:14px}
+.card>header{
+  display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);
+  font-family:var(--disp);font-weight:500;font-size:15px;
+}
+.card>header .num{font-family:var(--mono);font-size:11px;color:var(--signal);letter-spacing:.08em}
+.card>header .spacer{margin-left:auto}
+.card .body{padding:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+label.f{display:block;margin-bottom:10px}
+label.f>span{
+  display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--graphite);margin-bottom:4px;
+}
+input[type=text],input[type=email],input[type=url],textarea,select{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:2px;background:#FBFDFC;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--signal);background:#fff}
+textarea{resize:vertical;min-height:76px;line-height:1.55}
+.hint{font-size:12px;color:var(--graphite);margin:2px 0 10px}
+.item{border:1px dashed var(--line);border-radius:2px;padding:12px;margin-bottom:12px;background:#FCFDFD}
+.item>.head{display:flex;align-items:center;margin-bottom:10px}
+.item>.head b{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--graphite)}
+.item>.head .spacer{margin-left:auto}
+.rowbtns{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ---------- tools ---------- */
+.tool{background:var(--panel);border:1px solid var(--line);border-radius:2px;margin-bottom:14px}
+.tool>summary{
+  list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;gap:10px;
+  font-family:var(--disp);font-weight:500;
+}
+.tool>summary::-webkit-details-marker{display:none}
+.tool>summary::before{content:"+";font-family:var(--mono);color:var(--signal);font-size:15px;width:12px}
+.tool[open]>summary::before{content:"–"}
+.tool>summary small{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--graphite);letter-spacing:.05em;text-transform:uppercase}
+.tool .body{padding:0 14px 14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{
+  font-family:var(--mono);font-size:11.5px;padding:4px 9px;border-radius:2px;border:1px solid var(--line);
+  background:#F6F9F8;cursor:pointer;
+}
+.chip.hit{background:var(--signal-soft);border-color:var(--signal);color:#0A4A46}
+.chip.miss{background:#fff;border-style:dashed;color:var(--graphite)}
+.chip.miss:hover{border-color:var(--signal);color:var(--ink)}
+.score{display:flex;align-items:baseline;gap:10px;margin:6px 0 2px}
+.score b{font-family:var(--disp);font-size:40px;line-height:1;letter-spacing:-.03em}
+.score span{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--graphite)}
+.meter{height:8px;background:#EDF2F1;border:1px solid var(--line);border-radius:2px;overflow:hidden;margin:8px 0}
+.meter i{display:block;height:100%;background:var(--signal)}
+.msg{padding:9px 11px;border-radius:2px;font-size:13px;margin-bottom:7px;border-left:3px solid}
+.msg.ok{background:var(--signal-soft);border-color:var(--signal)}
+.msg.warn{background:var(--warn-soft);border-color:var(--warn)}
+.msg.bad{background:var(--alarm-soft);border-color:var(--alarm)}
+.msg b{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:2px}
+.out{background:#F6F9F8;border:1px solid var(--line);padding:12px;border-radius:2px;white-space:pre-wrap;font-size:13.5px;line-height:1.6;margin-top:10px}
+.num-inline{width:74px;display:inline-block;padding:2px 6px;font-family:var(--mono);font-size:13px;text-align:center}
+.sentence{border-bottom:1px solid var(--line);padding:10px 0;font-size:13.5px}
+.sentence:last-child{border-bottom:0}
+
+/* ---------- preview ---------- */
+.stage-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.stage-bar .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite)}
+.swatches{display:flex;gap:5px}
+.sw{width:24px;height:24px;border-radius:2px;border:2px solid transparent;cursor:pointer}
+.sw[aria-pressed="true"]{border-color:var(--ink)}
+.paper{
+  background:#fff;border:1px solid var(--line);
+  box-shadow:0 1px 0 rgba(14,27,34,.06),0 12px 30px rgba(14,27,34,.10);
+  padding:44px 46px;max-width:820px;margin:0 auto;min-height:640px;
+  font-family:Arial,Helvetica,sans-serif;color:#111;font-size:13.4px;line-height:1.5;
+}
+.paper.serif{font-family:Georgia,"Times New Roman",serif}
+.paper h1{font-size:23px;margin:0 0 3px;letter-spacing:.01em;color:var(--doc)}
+.paper .role{font-size:14px;margin:0 0 7px;color:#333;font-weight:bold}
+.paper .contact{font-size:12.6px;color:#222;margin:0 0 4px}
+.paper h2{
+  font-size:13px;text-transform:uppercase;letter-spacing:.1em;margin:19px 0 7px;
+  color:var(--doc);border-bottom:1.5px solid var(--doc);padding-bottom:3px;
+}
+.paper h3{font-size:13.6px;margin:0 0 1px}
+.paper .meta{font-size:12.4px;color:#444;margin:0 0 5px}
+.paper ul{margin:4px 0 10px;padding-left:19px}
+.paper li{margin-bottom:3px}
+.paper p{margin:0 0 9px}
+.paper .blk{margin-bottom:11px}
+.paper .empty{color:#9AA6A5;font-style:italic}
+.pagebreak{border-top:1px dashed #BBB;margin:26px 0 18px;padding-top:14px}
+
+
+/* ---------- struktur tata letak dokumen ---------- */
+.paper .cvside{display:flex;gap:26px;align-items:flex-start}
+.paper .cvside .side{width:32%;flex:none}
+.paper .cvside .main{flex:1;min-width:0}
+.paper .cols{column-count:2;column-gap:26px}
+.paper .cols h2{break-inside:avoid;break-after:avoid}
+.paper .cols .blk,.paper .cols ul{break-inside:avoid}
+.paper.fsans{font-family:Arial,Helvetica,sans-serif}
+.paper.fserif{font-family:Georgia,"Times New Roman",serif}
+
+/* d2 Serif Formal */
+.paper.d2 .cvhead{text-align:center;margin-bottom:16px}
+.paper.d2 h1{font-size:26px;letter-spacing:.04em}
+.paper.d2 h2{border-bottom:3px double var(--doc)}
+/* d3 Garis Tegas */
+.paper.d3 h1{text-transform:uppercase;letter-spacing:.09em;font-size:24px}
+.paper.d3 .cvhead{border-bottom:4px solid var(--doc);padding-bottom:9px;margin-bottom:6px}
+.paper.d3 h2{border-bottom:2px solid #111;color:#111;letter-spacing:.14em}
+/* d4 Blok Warna */
+.paper.d4 h2{background:var(--doc);color:#fff;border:0;padding:4px 9px;letter-spacing:.12em}
+.paper.d4 .cvhead{margin-bottom:14px}
+/* d5 Minimalis Lapang */
+.paper.d5{line-height:1.72}
+.paper.d5 h2{border:0;color:#666;font-size:11.5px;letter-spacing:.24em;margin:26px 0 6px}
+.paper.d5 h1{font-weight:normal;font-size:26px;letter-spacing:.02em}
+.paper.d5 ul{padding-left:16px}
+/* d6 Kepala Terpusat */
+.paper.d6 .cvhead{text-align:center;border-top:2px solid var(--doc);border-bottom:2px solid var(--doc);padding:12px 0;margin-bottom:14px}
+.paper.d6 h2{border-bottom:1px dotted #999;color:#111;letter-spacing:.16em}
+/* d7 Pita Kiri */
+.paper.d7 h2{border:0;border-left:5px solid var(--doc);padding:2px 0 2px 10px;background:#F4F7F7}
+.paper.d7 .cvhead{border-left:5px solid var(--doc);padding-left:10px}
+/* d8 Sidebar Ringkas */
+.paper.d8 .side{background:#F1F5F4;padding:14px;border-top:3px solid var(--doc)}
+.paper.d8 .side h2{margin-top:0;font-size:11.5px;border-bottom:1px solid #C8D3D2}
+.paper.d8 .side h2 ~ h2{margin-top:16px}
+.paper.d8 h2{letter-spacing:.13em}
+/* d9 Kartu Nama */
+.paper.d9 .cvhead{background:var(--doc);color:#fff;padding:20px 22px;margin:-6px 0 16px}
+.paper.d9 .cvhead h1,.paper.d9 .cvhead .role,.paper.d9 .cvhead .contact{color:#fff}
+.paper.d9 h2{border-bottom:1px solid #BBB;color:#222;letter-spacing:.14em}
+/* d10 Akademik */
+.paper.d10 h1{font-size:22px;font-weight:normal;letter-spacing:.06em}
+.paper.d10 h2{font-variant:small-caps;text-transform:none;font-size:15px;letter-spacing:.03em;border-bottom:1px solid #999;color:#222}
+.paper.d10 .meta{font-style:italic}
+/* d11 Teknis Mono */
+.paper.d11 h2{font-family:var(--mono);font-size:11.5px;border-bottom:1px solid var(--doc);letter-spacing:.05em}
+.paper.d11 .contact,.paper.d11 .meta{font-family:var(--mono);font-size:11.5px}
+.paper.d11 h1{letter-spacing:-.01em}
+/* d12 Kompak Padat */
+.paper.d12{font-size:12.2px;line-height:1.38}
+.paper.d12 h1{font-size:19px}
+.paper.d12 h2{margin:12px 0 4px;font-size:11.5px;padding-bottom:2px}
+.paper.d12 .blk{margin-bottom:7px}
+.paper.d12 ul{margin:2px 0 6px}
+/* d13 Modern Kapital */
+.paper.d13 h1{font-size:30px;font-weight:bold;text-transform:uppercase;letter-spacing:-.01em;line-height:1.05}
+.paper.d13 h2{border:0;font-weight:bold;font-size:13.5px;letter-spacing:.2em;color:#111;margin:22px 0 5px}
+.paper.d13 .cvhead{margin-bottom:12px}
+/* d14 Dua Kolom Seimbang */
+.paper.d14 h2{font-size:12px;letter-spacing:.12em}
+.paper.d14 .cvhead{border-bottom:2px solid var(--doc);padding-bottom:9px;margin-bottom:14px}
+/* d15 Kop Surat */
+.paper.d15 .cvhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-top:4px solid var(--doc);border-bottom:1px solid #BBB;padding:10px 0;margin-bottom:14px}
+.paper.d15 .cvhead .kanan{text-align:right;font-size:12px}
+.paper.d15 .cvhead .contact{margin:0}
+.paper.d15 h2{border-bottom:1px dotted var(--doc)}
+
+/* ---------- foto profil ---------- */
+.paper .cvhead.withphoto{display:flex;gap:20px;align-items:center}
+.paper .cvhead.withphoto.pos-kanan{flex-direction:row-reverse}
+.paper .cvhead.withphoto.pos-tengah{flex-direction:column;align-items:center;text-align:center}
+.paper .cvhead.withphoto .kepteks{flex:1;min-width:0}
+.paper .fotobox{flex:none;overflow:hidden;background:#EEF1F0;border:1px solid #D6DEDD}
+.paper .fotobox img{width:100%;height:100%;object-fit:cover;display:block}
+.paper .fotobox.f-bulat{border-radius:50%}
+.paper .fotobox.f-persegi,.paper .fotobox.f-bulat{aspect-ratio:1/1}
+.paper .fotobox.f-kartu{aspect-ratio:3/4}
+.paper .fotobox.s-kecil{width:66px}
+.paper .fotobox.s-sedang{width:88px}
+.paper .fotobox.s-besar{width:112px}
+.paper.d9 .fotobox{border-color:rgba(255,255,255,.5)}
+.paper.d15 .cvhead .fotobox{margin-left:14px}
+.fotopanel{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:12px;margin-top:4px}
+.fotoprev{width:74px;height:74px;border:1px solid var(--line);background:#F2F5F4;flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9.5px;color:var(--graphite);text-align:center;padding:4px}
+.fotoprev img{width:100%;height:100%;object-fit:cover}
+.fotoopt{flex:1;min-width:240px}
+
+/* ---------- surat ---------- */
+.paper.letter{line-height:1.62}
+.paper.letter p{margin:0 0 12px}
+.paper.letter .tgl{text-align:right;margin-bottom:20px}
+.paper.letter .hal{margin-bottom:18px}
+.paper.letter .tuju{margin-bottom:18px}
+.paper.letter .datadiri{margin:0 0 12px;padding-left:6px}
+.paper.letter .datadiri span{display:block}
+.paper.letter .lamp{margin:0 0 14px;padding-left:19px}
+.paper.letter .ttd{margin-top:52px;font-weight:bold}
+.paper.letter h2,.paper.letter h1{display:none}
+
+/* ---------- galeri desain ---------- */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,154px);gap:14px}
+.dcard{border:1px solid var(--line);background:var(--panel);padding:0;cursor:pointer;border-radius:2px;text-align:left;overflow:hidden;display:block}
+.dcard:hover{border-color:var(--signal)}
+.dcard[aria-pressed="true"]{border-color:var(--signal);box-shadow:0 0 0 2px var(--signal-soft)}
+.dthumb{position:relative;width:152px;height:206px;overflow:hidden;background:#fff;border-bottom:1px solid var(--line)}
+.dthumb .paper{position:absolute;top:0;left:0;width:800px;min-height:1080px;transform:scale(.19);transform-origin:top left;box-shadow:none;border:0;margin:0;padding:38px 40px;pointer-events:none}
+.dmeta{padding:7px 9px;font-size:12px;line-height:1.3}
+.dmeta em{display:block;font-family:var(--mono);font-size:9px;font-style:normal;letter-spacing:.06em;text-transform:uppercase;margin-top:3px;color:var(--signal)}
+.dmeta em.risk{color:var(--warn)}
+
+.toast{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+  background:var(--ink);color:#EAF1F0;padding:11px 17px;border-radius:2px;z-index:99;
+  font-size:13.5px;box-shadow:0 8px 26px rgba(0,0,0,.28);border-left:3px solid var(--signal);
+  max-width:90vw;
+}
+.toast.bad{border-left-color:var(--alarm)}
+.mobile-switch{display:none}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);border-top-color:var(--signal);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width:940px){
+  .shell{grid-template-columns:1fr}
+  .editor{border-right:0;border-bottom:1px solid var(--line);min-height:0}
+  .stage{position:static;max-height:none}
+  .paper{padding:26px 22px}
+  .mobile-switch{display:flex;gap:6px;margin-bottom:12px}
+  body.view-preview .editor{display:none}
+  body.view-edit .stage{display:none}
+}
+
+#printroot{display:none}
+@media print{
+  .bar,.editor,.stage,.toast{display:none!important}
+  #printroot{display:block!important}
+  #printroot .paper{box-shadow:none;border:0;margin:0;padding:0;max-width:none}
+  body{background:#fff}
+  @page{margin:16mm}
+}
+</style>
+</head>
+<body class="view-edit">
+
+<header class="bar">
+  <div class="brand">BikinCV <span>by Tama</span></div>
+  <div class="gauge">
+    <div class="gauge-top"><span>Kelengkapan dokumen</span><b id="gaugeVal">0%</b></div>
+    <div class="scale" id="scale"></div>
+  </div>
+  <div class="bar-actions">
+    <button class="btn ghost" id="btnSave">Simpan proyek</button>
+    <button class="btn ghost" id="btnOpen">Buka proyek</button>
+    <button class="btn ghost" id="btnWord">Unduh Word</button>
+    <button class="btn ghost" id="btnPdf">Unduh PDF</button>
+    <button class="btn ghost" id="btnTxt">Salin teks murni</button>
+  </div>
+</header>
+
+<main class="shell">
+  <section class="editor">
+    <div class="mobile-switch">
+      <button class="btn primary" data-view="edit">Isi data</button>
+      <button class="btn" data-view="preview">Lihat pratinjau</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-pane="bagian">Bagian CV</button>
+      <button class="tab" role="tab" aria-selected="false" data-pane="desain">Desain</button>
+      <button class="tab" role="tab" aria-selected="false" data-pane="surat">Surat lamaran</button>
+      <button class="tab" role="tab" aria-selected="false" data-pane="alat">Alat bantu</button>
+      <button class="tab" role="tab" aria-selected="false" data-pane="periksa">Periksa &amp; kirim</button>
+    </div>
+
+    <!-- ============ PANE: BAGIAN ============ -->
+    <div class="pane" id="pane-bagian">
+      <div class="hint">Centang bagian yang ingin ditampilkan. Bagian yang tidak dicentang tidak ikut tercetak.</div>
+      <div class="checklist" id="checklist"></div>
+      <div id="forms"></div>
+    </div>
+
+
+    <!-- ============ PANE: DESAIN ============ -->
+    <div class="pane" id="pane-desain" hidden>
+      <div class="hint">Lima belas tata letak dokumen. Pratinjau di bawah memakai isi CV Anda sendiri, jadi yang Anda lihat adalah yang akan tercetak. Label “berisiko ATS” berarti tata letak berkolom — indah dibaca manusia, tetapi urutan kata bisa teracak saat diurai mesin penyaring.</div>
+      <div class="gallery" id="gallery"></div>
+    </div>
+
+
+    <!-- ============ PANE: SURAT ============ -->
+    <div class="pane" id="pane-surat" hidden>
+      <div class="hint">Isi kolom di bawah, tekan “Susun surat”, lalu lihat hasilnya di panel kanan. Isi surat dirangkai dari data CV Anda — nama, pendidikan terakhir, pengalaman, dan keahlian — jadi tidak perlu mengetik ulang.</div>
+
+      <article class="card"><header>Jenis dan nada surat</header><div class="body">
+        <div class="grid2">
+          <label class="f"><span>Jenis surat</span>
+            <select data-surat="jenis">
+              <option value="lamaran">Surat lamaran kerja (format baku Indonesia)</option>
+              <option value="cover">Cover letter naratif (bahasa Indonesia)</option>
+              <option value="cover_en">Cover letter (bahasa Inggris)</option>
+              <option value="email">Badan surel ringkas</option>
+            </select>
+          </label>
+          <label class="f"><span>Nada</span>
+            <select data-surat="nada">
+              <option value="baku">Baku dan hormat</option>
+              <option value="hangat">Hangat dan personal</option>
+              <option value="lugas">Lugas dan padat</option>
+            </select>
+          </label>
+        </div>
+      </div></article>
+
+      <article class="card"><header>Tujuan surat</header><div class="body">
+        <div class="grid2">
+          <label class="f"><span>Nama perusahaan</span><input type="text" data-surat="perusahaan" placeholder="PT Sumber Rekayasa"></label>
+          <label class="f"><span>Posisi yang dilamar</span><input type="text" data-surat="posisi" placeholder="Analis Laboratorium"></label>
+          <label class="f"><span>Nama penerima (opsional)</span><input type="text" data-surat="penerima" placeholder="Bapak Andi Prasetyo"></label>
+          <label class="f"><span>Jabatan penerima</span><input type="text" data-surat="jabatanPenerima" placeholder="Manajer Sumber Daya Manusia"></label>
+          <label class="f" style="grid-column:1/-1"><span>Alamat perusahaan</span><input type="text" data-surat="alamat" placeholder="Jalan Industri Raya No. 12, Cikarang"></label>
+          <label class="f"><span>Sumber informasi lowongan</span><input type="text" data-surat="sumber" placeholder="laman karier perusahaan"></label>
+          <label class="f"><span>Kota penulisan surat</span><input type="text" data-surat="kota" placeholder="Cikarang"></label>
+          <label class="f"><span>Tanggal surat</span><input type="text" data-surat="tanggal" placeholder="13 Agustus 2026"></label>
+          <label class="f"><span>Kesiapan mulai bekerja</span><input type="text" data-surat="mulai" placeholder="dua minggu setelah pemberitahuan"></label>
+          <label class="f" style="grid-column:1/-1"><span>Kalimat khusus yang ingin ditambahkan (opsional)</span><input type="text" data-surat="catatan" placeholder="Saya bersedia ditempatkan pada sistem kerja gilir."></label>
+        </div>
+      </div></article>
+
+      <article class="card"><header>Berkas lampiran</header><div class="body">
+        <div class="hint">Yang dicentang akan tertulis sebagai daftar lampiran di dalam surat.</div>
+        <div class="checklist" id="lampList"></div>
+      </div></article>
+
+      <article class="card"><header>Susun dan sunting<span class="spacer"></span></header><div class="body">
+        <div class="rowbtns">
+          <button class="btn primary" id="btnSurat">Susun surat dari data CV</button>
+          <button class="btn" id="btnSuratAI">Perhalus dengan AI</button>
+          <button class="btn" id="btnSuratLihat">Tampilkan di panel kanan</button>
+        </div>
+        <label class="f" style="margin-top:12px"><span>Isi surat — silakan sunting bebas</span>
+          <textarea data-surat="isi" style="min-height:210px" placeholder="Tekan “Susun surat dari data CV” untuk mengisi bagian ini."></textarea></label>
+        <div class="rowbtns">
+          <button class="btn" id="btnSuratWord">Unduh surat (Word)</button>
+          <button class="btn" id="btnSuratPdf">Unduh surat (PDF)</button>
+          <button class="btn" id="btnSuratTxt">Salin teks surat</button>
+        </div>
+        <div id="suratOut"></div>
+      </div></article>
+    </div>
+
+    <!-- ============ PANE: ALAT ============ -->
+    <div class="pane" id="pane-alat" hidden>
+
+      <details class="tool" open>
+        <summary>Analisis kecocokan kata kunci <small>lokal</small></summary>
+        <div class="body">
+          <div class="hint">Tempelkan deskripsi lowongan, lalu hitung skor. Klik kata kunci yang belum ada untuk memasukkannya ke daftar keahlian.</div>
+          <textarea id="jobdesc" placeholder="Tempel deskripsi lowongan di sini…" style="min-height:120px"></textarea>
+          <div class="rowbtns" style="margin-top:8px"><button class="btn primary" id="btnMatch">Hitung skor kecocokan</button></div>
+          <div id="matchOut"></div>
+        </div>
+      </details>
+
+      <details class="tool">
+        <summary>Template kalimat pencapaian <small>angka bisa diubah</small></summary>
+        <div class="body">
+          <label class="f"><span>Profesi</span>
+            <select id="tplRole">
+              <option value="analis">Analis laboratorium kimia</option>
+              <option value="insinyur">Insinyur desain</option>
+              <option value="lingkungan">Teknik lingkungan / pengolahan air</option>
+              <option value="qc">QA / QC &amp; sistem mutu</option>
+              <option value="umum">Umum / administrasi teknis</option>
+            </select>
+          </label>
+          <div id="tplList"></div>
+        </div>
+      </details>
+
+      <details class="tool">
+        <summary>Pembuat ringkasan otomatis <small>3 keahlian utama</small></summary>
+        <div class="body">
+          <div class="hint">Pilih tepat tiga keahlian teknis utama. Sistem merangkainya menjadi satu paragraf ringkasan.</div>
+          <div class="grid3">
+            <label class="f"><span>Keahlian 1</span><select id="sk1"></select></label>
+            <label class="f"><span>Keahlian 2</span><select id="sk2"></select></label>
+            <label class="f"><span>Keahlian 3</span><select id="sk3"></select></label>
+          </div>
+          <div class="grid2">
+            <label class="f"><span>Posisi yang dituju</span><input type="text" id="skRole" placeholder="Analis Laboratorium"></label>
+            <label class="f"><span>Lama pengalaman (tahun)</span><input type="text" id="skYears" placeholder="2"></label>
+          </div>
+          <div class="rowbtns">
+            <button class="btn primary" id="btnSummary">Susun ringkasan</button>
+            <button class="btn" id="btnSummaryAI">Perhalus dengan AI</button>
+          </div>
+          <div id="summaryOut"></div>
+        </div>
+      </details>
+
+      <details class="tool">
+        <summary>Saran keahlian otomatis <small>membaca ketikan Anda</small></summary>
+        <div class="body">
+          <div class="hint">Saran muncul dari kata kunci pada isian pengalaman kerja. Klik untuk menambahkan ke keahlian teknis.</div>
+          <div id="skillSuggest"><div class="msg ok">Belum ada saran. Isi bagian pengalaman kerja terlebih dahulu.</div></div>
+        </div>
+      </details>
+
+      <details class="tool">
+        <summary>Integrasi portofolio <small>perlu AI</small></summary>
+        <div class="body">
+          <div class="hint">Masukkan tautan profil profesional (GrabCAD, GitHub, Behance, ResearchGate). Sistem mencari data publik proyek Anda dan menyusun ringkasannya sebagai halaman lampiran CV.</div>
+          <label class="f"><span>Tautan profil</span><input type="url" id="portoUrl" placeholder="https://grabcad.com/nama.anda"></label>
+          <div class="rowbtns">
+            <button class="btn primary" id="btnPorto">Tarik data proyek</button>
+            <button class="btn" id="btnPortoManual">Tambah proyek manual</button>
+          </div>
+          <div id="portoOut"></div>
+        </div>
+      </details>
+
+      <details class="tool">
+        <summary>Penerjemah dokumen cepat <small>perlu AI</small></summary>
+        <div class="body">
+          <div class="hint">Menerjemahkan seluruh isi CV dari bahasa Indonesia ke bahasa Inggris. Versi asli tetap tersimpan dan bisa dikembalikan.</div>
+          <div class="rowbtns">
+            <button class="btn primary" id="btnTranslate">Terjemahkan ke Inggris</button>
+            <button class="btn" id="btnRestore" disabled>Kembalikan versi Indonesia</button>
+          </div>
+          <div id="trOut"></div>
+        </div>
+      </details>
+
+      <details class="tool">
+        <summary>Simulasi wawancara kerja <small>perlu AI</small></summary>
+        <div class="body">
+          <div class="hint">Tiga pertanyaan disusun khusus dari isi CV Anda — termasuk pertanyaan proses kerja atas perangkat lunak yang Anda cantumkan.</div>
+          <button class="btn primary" id="btnInterview">Buat 3 pertanyaan</button>
+          <div id="interviewOut"></div>
+        </div>
+      </details>
+    </div>
+
+    <!-- ============ PANE: PERIKSA ============ -->
+    <div class="pane" id="pane-periksa" hidden>
+      <details class="tool" open>
+        <summary>Pemeriksa ramah ATS <small>otomatis, langsung</small></summary>
+        <div class="body">
+          <div class="hint">Tata letak dipindai setiap kali Anda mengetik. Elemen grafik, tabel, dan simbol dekoratif ditolak saat ditempel.</div>
+          <div id="atsOut"></div>
+        </div>
+      </details>
+
+      <details class="tool">
+        <summary>Pemeriksa ejaan <small>lokal + AI</small></summary>
+        <div class="body">
+          <div class="rowbtns">
+            <button class="btn primary" id="btnSpell">Periksa ejaan</button>
+            <button class="btn" id="btnSpellAI">Periksa lebih teliti (AI)</button>
+          </div>
+          <div id="spellOut"></div>
+        </div>
+      </details>
+
+      <details class="tool">
+        <summary>Tautan berbagi &amp; pelacak kunjungan</summary>
+        <div class="body">
+          <div class="hint">Terbitkan CV sebagai kode tautan, bagikan ke perekrut, lalu pantau berapa kali dibuka.</div>
+          <div class="rowbtns">
+            <button class="btn primary" id="btnPublish">Terbitkan CV</button>
+            <button class="btn" id="btnStats">Perbarui jumlah kunjungan</button>
+          </div>
+          <div style="margin-top:10px" class="grid2">
+            <label class="f"><span>Buka CV terbitan orang lain</span><input type="text" id="openCode" placeholder="kode-cv-xxxxx"></label>
+            <div style="display:flex;align-items:flex-end;padding-bottom:10px"><button class="btn" id="btnOpenShared">Buka kode</button></div>
+          </div>
+          <div id="pubOut"></div>
+        </div>
+      </details>
+
+      <details class="tool">
+        <summary>Penyimpanan data</summary>
+        <div class="body">
+          <div class="hint">Menyimpan proyek berarti mengunduh satu berkas <b>.js</b> berisi seluruh isian, desain, warna, dan surat lamaran Anda. Simpan berkas itu di ponsel, surel, atau penyimpanan awan; di perangkat mana pun, tekan “Buka proyek” lalu pilih berkas tersebut untuk melanjutkan.</div>
+          <div class="rowbtns">
+            <button class="btn primary" id="btnSave2">Simpan proyek (unduh .js)</button>
+            <button class="btn" id="btnOpen2">Buka proyek dari berkas</button>
+            <button class="btn" id="btnAuto">Pulihkan draf otomatis</button>
+            <button class="btn danger" id="btnReset">Kosongkan formulir</button>
+          </div>
+          <div id="saveOut"></div>
+          <input type="file" id="fileIn" accept=".js,.json,text/javascript,application/json" hidden>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ PREVIEW ============ -->
+  <section class="stage">
+    <div class="mobile-switch">
+      <button class="btn" data-view="edit">Kembali mengisi</button>
+    </div>
+    <div class="stage-bar">
+      <span class="lbl">Dokumen</span>
+      <select id="docMode" style="width:auto">
+        <option value="cv">CV</option>
+        <option value="surat">Surat lamaran</option>
+      </select>
+      <span class="lbl">Template</span>
+      <select id="tplIndustry" style="width:auto">
+        <option value="umum">Umum (kronologis)</option>
+        <option value="insinyur">Insinyur desain — proyek teknis di depan</option>
+        <option value="analis">Analis lab kimia — alat ukur di depan</option>
+      </select>
+      <span class="lbl">Huruf</span>
+      <select id="docFont" style="width:auto">
+        <option value="auto">Ikut desain</option>
+        <option value="sans">Arial (sans)</option>
+        <option value="serif">Georgia (serif)</option>
+      </select>
+      <span class="lbl">Desain</span>
+      <button class="btn" data-pane="desain" id="designNowBtn"><span id="designNow">Klasik Arsip</span> — ganti</button>
+      <span class="lbl">Warna</span>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="paper" id="paper"></div>
+  </section>
+</main>
+
+<div id="printroot"></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   1. SKEMA BAGIAN CV
+   ========================================================= */
+const SECTIONS = {
+  kontak: {no:"01", label:"Informasi kontak", type:"single", locked:true, fields:[
+    {k:"nama", l:"Nama lengkap", w:2},
+    {k:"posisi", l:"Posisi / gelar profesi"},
+    {k:"telp", l:"Nomor telepon"},
+    {k:"email", l:"Surel", t:"email"},
+    {k:"kota", l:"Kota domisili"},
+    {k:"linkedin", l:"LinkedIn (opsional)"},
+    {k:"web", l:"Situs / portofolio (opsional)"}
+  ]},
+  ringkasan: {no:"02", label:"Ringkasan profil", type:"text",
+    hint:"Dua sampai empat kalimat perkenalan diri. Sebutkan bidang, pengalaman, dan alat kerja utama.",
+    placeholder:"Analis laboratorium dengan pengalaman dua tahun pada pengujian mutu bahan bakar…"},
+  pengalaman: {no:"03", label:"Pengalaman kerja", type:"list", itemLabel:"Pekerjaan / proyek", fields:[
+    {k:"posisi", l:"Posisi / peran"},
+    {k:"perusahaan", l:"Perusahaan / institusi"},
+    {k:"lokasi", l:"Lokasi"},
+    {k:"mulai", l:"Mulai (mis. Jan 2023)"},
+    {k:"selesai", l:"Selesai (atau: Sekarang)"},
+    {k:"poin", l:"Rincian pekerjaan — satu baris satu poin", t:"textarea", w:2,
+      ph:"Merancang unit constructed wetland untuk debit 5 m3/hari\nMenurunkan kadar COD limbah sebesar 68%"}
+  ]},
+  pendidikan: {no:"04", label:"Pendidikan", type:"list", itemLabel:"Riwayat sekolah", fields:[
+    {k:"institusi", l:"Sekolah / perguruan tinggi"},
+    {k:"jurusan", l:"Jurusan / program studi"},
+    {k:"jenjang", l:"Jenjang (SMK, D3, S1…)"},
+    {k:"tahun", l:"Tahun (mis. 2018–2021)"},
+    {k:"nilai", l:"Nilai akhir / IPK (opsional)"},
+    {k:"catatan", l:"Catatan (opsional)"}
+  ]},
+  keahlian: {no:"05", label:"Keahlian teknis", type:"list", itemLabel:"Kelompok keahlian", fields:[
+    {k:"kategori", l:"Kategori (mis. Perangkat lunak rekayasa)"},
+    {k:"item", l:"Daftar, pisahkan dengan koma", w:2, ph:"SAP2000, AutoCAD, ETABS, Excel lanjutan"}
+  ]},
+  portofolio: {no:"06", label:"Portofolio", type:"list", itemLabel:"Tautan karya", fields:[
+    {k:"nama", l:"Nama platform / karya"},
+    {k:"tautan", l:"Tautan", t:"url"},
+    {k:"deskripsi", l:"Keterangan singkat", w:2}
+  ]},
+  sertifikasi: {no:"07", label:"Sertifikasi", type:"list", itemLabel:"Lisensi resmi", fields:[
+    {k:"nama", l:"Nama sertifikat"},
+    {k:"penerbit", l:"Lembaga penerbit"},
+    {k:"tahun", l:"Tahun terbit"},
+    {k:"nomor", l:"Nomor registrasi (opsional)"}
+  ]},
+  bahasa: {no:"08", label:"Bahasa", type:"list", itemLabel:"Bahasa", fields:[
+    {k:"bahasa", l:"Bahasa"},
+    {k:"tingkat", l:"Tingkat kemahiran", t:"select", opt:["Dasar","Menengah","Mahir","Sangat mahir","Penutur asli"]},
+    {k:"bukti", l:"Bukti / skor tes (opsional)", w:2}
+  ]},
+  penghargaan: {no:"09", label:"Penghargaan", type:"list", itemLabel:"Prestasi", fields:[
+    {k:"nama", l:"Nama penghargaan / lomba"},
+    {k:"penyelenggara", l:"Penyelenggara"},
+    {k:"tahun", l:"Tahun"},
+    {k:"keterangan", l:"Keterangan (peringkat, jumlah peserta)", w:2}
+  ]},
+  organisasi: {no:"10", label:"Pengalaman organisasi", type:"list", itemLabel:"Kepengurusan", fields:[
+    {k:"jabatan", l:"Jabatan"},
+    {k:"organisasi", l:"Organisasi / komunitas"},
+    {k:"tahun", l:"Periode"},
+    {k:"poin", l:"Rincian kegiatan — satu baris satu poin", t:"textarea", w:2}
+  ]},
+  referensi: {no:"11", label:"Referensi kerja", type:"list", itemLabel:"Pemberi rekomendasi", fields:[
+    {k:"nama", l:"Nama"},
+    {k:"jabatan", l:"Jabatan"},
+    {k:"instansi", l:"Instansi"},
+    {k:"telp", l:"Telepon"},
+    {k:"email", l:"Surel", t:"email"},
+    {k:"hubungan", l:"Hubungan kerja"}
+  ]},
+  publikasi: {no:"12", label:"Publikasi atau penelitian", type:"list", itemLabel:"Karya tulis", fields:[
+    {k:"judul", l:"Judul", w:2},
+    {k:"media", l:"Jurnal / penerbit / seminar"},
+    {k:"tahun", l:"Tahun"},
+    {k:"tautan", l:"DOI / tautan", t:"url", w:2}
+  ]}
+};
+const KEYS = Object.keys(SECTIONS);
+
+const ORDER = {
+  umum:     ["ringkasan","pengalaman","pendidikan","keahlian","organisasi","sertifikasi","penghargaan","publikasi","portofolio","bahasa","referensi"],
+  insinyur: ["ringkasan","pengalaman","portofolio","keahlian","pendidikan","sertifikasi","publikasi","penghargaan","organisasi","bahasa","referensi"],
+  analis:   ["ringkasan","keahlian","pengalaman","pendidikan","sertifikasi","publikasi","penghargaan","organisasi","portofolio","bahasa","referensi"]
+};
+const COLORS = [
+  {id:"navy",   hex:"#1F3B73", label:"Biru arsip"},
+  {id:"hijau",  hex:"#14524A", label:"Hijau lab"},
+  {id:"arang",  hex:"#33383D", label:"Abu arang"}
+];
+
+/* =========================================================
+   2. STATE
+   ========================================================= */
+
+const DESIGNS = [
+  {id:"d1",  nama:"Klasik Arsip",       font:"fsans",  ats:1, ket:"Garis bawah tipis, susunan lurus satu kolom."},
+  {id:"d2",  nama:"Serif Formal",       font:"fserif", ats:1, ket:"Nama di tengah, garis ganda pada judul bagian."},
+  {id:"d3",  nama:"Garis Tegas",        font:"fsans",  ats:1, ket:"Nama kapital, garis tebal pemisah kepala."},
+  {id:"d4",  nama:"Blok Warna",         font:"fsans",  ats:1, ket:"Judul bagian berlatar warna penuh."},
+  {id:"d5",  nama:"Minimalis Lapang",   font:"fsans",  ats:1, ket:"Tanpa garis, jarak antarbagian lega."},
+  {id:"d6",  nama:"Kepala Terpusat",    font:"fserif", ats:1, ket:"Kepala terkurung dua garis, isi rata kiri."},
+  {id:"d7",  nama:"Pita Kiri",          font:"fsans",  ats:1, ket:"Pita warna di tepi kiri tiap judul bagian."},
+  {id:"d8",  nama:"Sidebar Ringkas",    font:"fsans",  ats:0, layout:"sidebar", ket:"Keahlian, bahasa, dan sertifikasi di kolom samping."},
+  {id:"d9",  nama:"Kartu Nama",         font:"fsans",  ats:1, ket:"Kepala berupa blok warna penuh selebar halaman."},
+  {id:"d10", nama:"Akademik",           font:"fserif", ats:1, ket:"Huruf serif, judul kapital kecil — cocok untuk publikasi."},
+  {id:"d11", nama:"Teknis Mono",        font:"fsans",  ats:1, ket:"Judul dan data memakai huruf mono seperti lembar kerja."},
+  {id:"d12", nama:"Kompak Padat",       font:"fsans",  ats:1, ket:"Ukuran huruf kecil, muat banyak isi dalam satu halaman."},
+  {id:"d13", nama:"Modern Kapital",     font:"fsans",  ats:1, ket:"Nama besar tebal, judul bagian kapital tanpa garis."},
+  {id:"d14", nama:"Dua Kolom Seimbang", font:"fsans",  ats:0, layout:"twocol", ket:"Seluruh isi mengalir dalam dua kolom."},
+  {id:"d15", nama:"Kop Surat",          font:"fserif", ats:1, ket:"Nama di kiri, kontak di kanan, seperti kop resmi."}
+];
+const DOC_CSS = {
+  d2:"body{font-family:Georgia,serif} .cvhead{text-align:center} h2{border-bottom:3pt double %C%}",
+  d3:"h1{text-transform:uppercase;letter-spacing:2pt} .cvhead{border-bottom:3pt solid %C%;padding-bottom:6pt} h2{color:#111;border-bottom:1.5pt solid #111}",
+  d4:"h2{background:%C%;color:#FFFFFF;border:0;padding:3pt 6pt}",
+  d5:"h2{border:0;color:#666666;letter-spacing:3pt} body{line-height:1.6}",
+  d6:"body{font-family:Georgia,serif} .cvhead{text-align:center;border-top:1.5pt solid %C%;border-bottom:1.5pt solid %C%;padding:8pt 0}",
+  d7:"h2{border:0;border-left:4pt solid %C%;padding:2pt 0 2pt 8pt}",
+  d8:"h2{letter-spacing:2pt}",
+  d9:".cvhead{background:%C%;color:#FFFFFF;padding:12pt} .cvhead h1{color:#FFFFFF} .cvhead p{color:#FFFFFF} h2{color:#222222;border-bottom:.75pt solid #BBBBBB}",
+  d10:"body{font-family:Georgia,serif} h2{font-variant:small-caps;text-transform:none;font-size:13pt;color:#222222;border-bottom:.75pt solid #999999} .meta{font-style:italic}",
+  d11:"h2{font-family:Consolas,'Courier New',monospace;font-size:10pt} .meta,.contact{font-family:Consolas,'Courier New',monospace;font-size:9.5pt}",
+  d12:"body{font-size:10pt;line-height:1.25} h1{font-size:15pt} h2{margin:9pt 0 3pt}",
+  d13:"h1{font-size:24pt;text-transform:uppercase} h2{border:0;font-weight:bold;letter-spacing:3pt;color:#111111}",
+  d14:"h2{letter-spacing:2pt}",
+  d15:"body{font-family:Georgia,serif} .cvhead{border-top:3pt solid %C%;border-bottom:.75pt solid #BBBBBB;padding:6pt 0} h2{border-bottom:.75pt dotted %C%}"
+};
+
+function blank(){
+  const s = {meta:{template:"umum", design:"d1", color:"navy", font:"auto", lang:"id", doc:"cv"}, on:{}, data:{}, lampiran:[], share:null,
+    foto:{on:true, src:"", bentuk:"persegi", ukuran:"sedang", posisi:"kanan"},
+    surat:{jenis:"lamaran", nada:"baku", perusahaan:"", posisi:"", penerima:"", jabatanPenerima:"", alamat:"",
+           sumber:"", kota:"", tanggal:"", mulai:"", catatan:"", isi:"", berkas:["Daftar riwayat hidup (CV)"]}};
+  KEYS.forEach(k=>{
+    s.on[k] = ["kontak","ringkasan","pengalaman","pendidikan","keahlian"].includes(k);
+    const def = SECTIONS[k];
+    if(def.type==="list") s.data[k] = [];
+    else if(def.type==="text") s.data[k] = "";
+    else { s.data[k] = {}; def.fields.forEach(f=>s.data[k][f.k]=""); }
+  });
+  s.data.pengalaman.push(emptyItem("pengalaman"));
+  s.data.pendidikan.push(emptyItem("pendidikan"));
+  s.data.keahlian.push(emptyItem("keahlian"));
+  return s;
+}
+function emptyItem(sec){const o={};SECTIONS[sec].fields.forEach(f=>o[f.k]="");return o;}
+let S = blank();
+let BACKUP_ID = null;
+
+/* =========================================================
+   3. UTIL
+   ========================================================= */
+const $ = s=>document.querySelector(s);
+const $$ = s=>Array.from(document.querySelectorAll(s));
+function esc(t){return String(t==null?"":t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function toast(msg, bad){
+  const el = document.createElement("div");
+  el.className = "toast" + (bad?" bad":"");
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 3600);
+}
+function lines(t){return String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);}
+function filled(o){return Object.values(o||{}).some(v=>String(v||"").trim());}
+
+/* Penolak elemen grafik & tabel — dijalankan pada tiap masukan */
+const GRAPHIC_CLASS = "[\\u{1F000}-\\u{1FAFF}\\u{2190}-\\u{27BF}\\u{2B00}-\\u{2BFF}\\u{FE0F}\\u{2500}-\\u{257F}\\u{25A0}-\\u{25FF}]";
+const GRAPHIC_TEST = new RegExp(GRAPHIC_CLASS, "u");          // tanpa /g agar test() tidak menyimpan posisi
+const GRAPHIC_RE = new RegExp(GRAPHIC_CLASS, "gu");           // untuk penggantian
+function sanitize(v){
+  let out = String(v);
+  let dirty = false;
+  if(/<\s*(img|table|tr|td|svg|canvas|figure|object|embed)[\s>\/]/i.test(out)){ dirty = true; }
+  if(/<[^>]+>/.test(out)){ out = out.replace(/<[^>]*>/g,""); dirty = true; }
+  if(GRAPHIC_TEST.test(out)){ out = out.replace(GRAPHIC_RE,""); dirty = true; }
+  if(/\t| \| /.test(out)){ out = out.replace(/\t/g," ").replace(/ \| /g," — "); dirty = true; }
+  return {v:out, dirty};
+}
+
+/* =========================================================
+   4. RENDER: DAFTAR PERIKSA + FORMULIR
+   ========================================================= */
+function renderChecklist(){
+  $("#checklist").innerHTML = KEYS.map(k=>{
+    const d = SECTIONS[k];
+    return '<label class="chk'+(S.on[k]?" active":"")+'">'
+      + '<input type="checkbox" data-toggle="'+k+'"'+(S.on[k]?" checked":"")+(d.locked?" disabled":"")+'>'
+      + '<span class="num">'+d.no+'</span><span>'+d.label+'</span></label>';
+  }).join("");
+}
+
+function fieldHtml(sec, idx, f, val){
+  const path = 'data-sec="'+sec+'" data-idx="'+idx+'" data-key="'+f.k+'"';
+  const style = f.w===2 ? ' style="grid-column:1/-1"' : "";
+  let input;
+  if(f.t==="textarea") input = '<textarea '+path+' placeholder="'+esc(f.ph||"")+'">'+esc(val)+'</textarea>';
+  else if(f.t==="select") input = '<select '+path+'><option value="">— pilih —</option>'+f.opt.map(o=>'<option'+(o===val?" selected":"")+'>'+o+'</option>').join("")+'</select>';
+  else input = '<input type="'+(f.t||"text")+'" '+path+' value="'+esc(val)+'" placeholder="'+esc(f.ph||"")+'">';
+  return '<label class="f"'+style+'><span>'+f.l+'</span>'+input+'</label>';
+}
+
+function renderForms(){
+  let html = "";
+  KEYS.filter(k=>S.on[k]).forEach(k=>{
+    const d = SECTIONS[k], v = S.data[k];
+    html += '<article class="card"><header><span class="num">'+d.no+'</span>'+d.label+'<span class="spacer"></span>'
+      + (d.type==="list" ? '<button class="btn tiny" data-add="'+k+'">Tambah '+d.itemLabel.toLowerCase()+'</button>' : "")
+      + '</header><div class="body">';
+    if(d.hint) html += '<div class="hint">'+d.hint+'</div>';
+
+    if(d.type==="text"){
+      html += '<textarea data-sec="'+k+'" data-idx="-1" data-key="_" placeholder="'+esc(d.placeholder||"")+'" style="min-height:104px">'+esc(v)+'</textarea>';
+    } else if(d.type==="single"){
+      html += '<div class="grid2">'+d.fields.map(f=>fieldHtml(k,-1,f,v[f.k])).join("")+'</div>';
+      html += fotoPanel();
+    } else {
+      if(!v.length) html += '<div class="hint">Belum ada isian. Tekan “Tambah” di atas.</div>';
+      v.forEach((it,i)=>{
+        html += '<div class="item"><div class="head"><b>'+d.itemLabel+' '+(i+1)+'</b><span class="spacer"></span>'
+          + (i>0?'<button class="btn tiny" data-move="'+k+':'+i+':-1">↑</button> ':"")
+          + (i<v.length-1?'<button class="btn tiny" data-move="'+k+':'+i+':1">↓</button> ':"")
+          + '<button class="btn tiny danger" data-del="'+k+':'+i+'">Hapus</button></div>'
+          + '<div class="grid2">'+d.fields.map(f=>fieldHtml(k,i,f,it[f.k])).join("")+'</div></div>';
+      });
+    }
+    html += '</div></article>';
+  });
+  $("#forms").innerHTML = html;
+}
+
+/* =========================================================
+   5. RENDER: PRATINJAU CV
+   ========================================================= */
+function contactLine(){
+  const c = S.data.kontak;
+  const bits = [c.telp, c.email, c.kota, c.linkedin, c.web].map(x=>String(x||"").trim()).filter(Boolean);
+  return bits.join("  •  ");
+}
+function block(title, inner){ return inner ? '<h2>'+esc(title)+'</h2>'+inner : ""; }
+
+const HEAD = {
+  id:{ringkasan:"Ringkasan Profil",pengalaman:"Pengalaman Kerja",pendidikan:"Pendidikan",keahlian:"Keahlian Teknis",portofolio:"Portofolio",sertifikasi:"Sertifikasi",bahasa:"Bahasa",penghargaan:"Penghargaan",organisasi:"Pengalaman Organisasi",referensi:"Referensi Kerja",publikasi:"Publikasi dan Penelitian",lampiran:"Lampiran: Ringkasan Proyek"},
+  en:{ringkasan:"Professional Summary",pengalaman:"Work Experience",pendidikan:"Education",keahlian:"Technical Skills",portofolio:"Portfolio",sertifikasi:"Certifications",bahasa:"Languages",penghargaan:"Awards",organisasi:"Organisational Experience",referensi:"References",publikasi:"Publications and Research",lampiran:"Appendix: Project Summary"}
+};
+function H(k){ return (HEAD[S.meta.lang]||HEAD.id)[k]; }
+
+function renderSection(k){
+  const v = S.data[k];
+  switch(k){
+    case "ringkasan":
+      return String(v||"").trim() ? block(H("ringkasan"), "<p>"+esc(v.trim())+"</p>") : "";
+    case "pengalaman":{
+      const rows = v.filter(filled).map(it=>{
+        const per = [it.mulai, it.selesai].filter(Boolean).join(" – ");
+        const meta = [it.perusahaan, it.lokasi, per].filter(Boolean).join(" | ");
+        return '<div class="blk"><h3>'+esc(it.posisi||"—")+'</h3>'
+          + (meta?'<p class="meta">'+esc(meta)+'</p>':"")
+          + (lines(it.poin).length?'<ul>'+lines(it.poin).map(p=>'<li>'+esc(p)+'</li>').join("")+'</ul>':"")
+          + '</div>';
+      }).join("");
+      return block(H("pengalaman"), rows);
+    }
+    case "pendidikan":{
+      const rows = v.filter(filled).map(it=>{
+        const t1 = [it.jenjang, it.jurusan].filter(Boolean).join(" — ");
+        const meta = [it.tahun, it.nilai?("Nilai akhir "+it.nilai):"", it.catatan].filter(Boolean).join(" | ");
+        return '<div class="blk"><h3>'+esc(it.institusi||"—")+'</h3>'
+          + (t1?'<p class="meta">'+esc(t1)+'</p>':"")
+          + (meta?'<p class="meta">'+esc(meta)+'</p>':"")+'</div>';
+      }).join("");
+      return block(H("pendidikan"), rows);
+    }
+    case "keahlian":{
+      const rows = v.filter(it=>String(it.item||"").trim()).map(it=>
+        '<li><b>'+esc(it.kategori||"Umum")+':</b> '+esc(it.item)+'</li>').join("");
+      return block(H("keahlian"), rows?'<ul>'+rows+'</ul>':"");
+    }
+    case "portofolio":{
+      const rows = v.filter(filled).map(it=>'<li><b>'+esc(it.nama||"Portofolio")+':</b> '+esc(it.tautan||"")
+        +(it.deskripsi?" — "+esc(it.deskripsi):"")+'</li>').join("");
+      return block(H("portofolio"), rows?'<ul>'+rows+'</ul>':"");
+    }
+    case "sertifikasi":{
+      const rows = v.filter(filled).map(it=>'<li>'+esc(it.nama||"—")
+        +([it.penerbit,it.tahun].filter(Boolean).length?" — "+esc([it.penerbit,it.tahun].filter(Boolean).join(", ")):"")
+        +(it.nomor?" (No. "+esc(it.nomor)+")":"")+'</li>').join("");
+      return block(H("sertifikasi"), rows?'<ul>'+rows+'</ul>':"");
+    }
+    case "bahasa":{
+      const rows = v.filter(filled).map(it=>'<li>'+esc(it.bahasa||"—")+(it.tingkat?" — "+esc(it.tingkat):"")
+        +(it.bukti?" ("+esc(it.bukti)+")":"")+'</li>').join("");
+      return block(H("bahasa"), rows?'<ul>'+rows+'</ul>':"");
+    }
+    case "penghargaan":{
+      const rows = v.filter(filled).map(it=>'<li>'+esc(it.nama||"—")
+        +([it.penyelenggara,it.tahun].filter(Boolean).length?" — "+esc([it.penyelenggara,it.tahun].filter(Boolean).join(", ")):"")
+        +(it.keterangan?". "+esc(it.keterangan):"")+'</li>').join("");
+      return block(H("penghargaan"), rows?'<ul>'+rows+'</ul>':"");
+    }
+    case "organisasi":{
+      const rows = v.filter(filled).map(it=>'<div class="blk"><h3>'+esc(it.jabatan||"—")+'</h3>'
+        +'<p class="meta">'+esc([it.organisasi,it.tahun].filter(Boolean).join(" | "))+'</p>'
+        +(lines(it.poin).length?'<ul>'+lines(it.poin).map(p=>'<li>'+esc(p)+'</li>').join("")+'</ul>':"")+'</div>').join("");
+      return block(H("organisasi"), rows);
+    }
+    case "referensi":{
+      const rows = v.filter(filled).map(it=>'<div class="blk"><h3>'+esc(it.nama||"—")+'</h3><p class="meta">'
+        +esc([it.jabatan,it.instansi].filter(Boolean).join(", "))+'</p><p class="meta">'
+        +esc([it.telp,it.email,it.hubungan].filter(Boolean).join(" | "))+'</p></div>').join("");
+      return block(H("referensi"), rows);
+    }
+    case "publikasi":{
+      const rows = v.filter(filled).map(it=>'<li>'+esc(it.judul||"—")
+        +([it.media,it.tahun].filter(Boolean).length?". "+esc([it.media,it.tahun].filter(Boolean).join(", ")):"")
+        +(it.tautan?". "+esc(it.tautan):"")+'</li>').join("");
+      return block(H("publikasi"), rows?'<ul>'+rows+'</ul>':"");
+    }
+  }
+  return "";
+}
+
+function design(id){ return DESIGNS.find(d=>d.id===(id||S.meta.design)) || DESIGNS[0]; }
+
+function cvHead(D){
+  const c = S.data.kontak;
+  const nama = String(c.nama||"").trim();
+  const h1 = '<h1>'+ (nama?esc(nama):'<span class="empty">Nama lengkap Anda</span>') +'</h1>';
+  const role = c.posisi ? '<p class="role">'+esc(c.posisi)+'</p>' : "";
+  const cl = contactLine();
+  const contact = '<p class="contact">'+ (cl?esc(cl):'<span class="empty">Telepon • surel • kota domisili</span>') +'</p>';
+  const foto = fotoHtml();
+  if(D.id==="d15") return '<div class="cvhead"><div class="kiri">'+h1+role+'</div><div class="kanan">'+contact+'</div>'+foto+'</div>';
+  if(!foto) return '<div class="cvhead">'+h1+role+contact+'</div>';
+  return '<div class="cvhead withphoto pos-'+S.foto.posisi+'">'+foto
+    + '<div class="kepteks">'+h1+role+contact+'</div></div>';
+}
+
+function buildCV(designId){
+  const D = design(designId);
+  const parts = [];
+  (ORDER[S.meta.template]||ORDER.umum).forEach(k=>{
+    if(!S.on[k]) return;
+    const html = renderSection(k);
+    if(html) parts.push({k, html});
+  });
+
+  let body;
+  if(D.layout==="sidebar"){
+    const SIDE = ["keahlian","bahasa","sertifikasi","referensi","portofolio"];
+    const side = parts.filter(p=>SIDE.includes(p.k)).map(p=>p.html).join("");
+    const main = parts.filter(p=>!SIDE.includes(p.k)).map(p=>p.html).join("");
+    body = side
+      ? '<div class="cvside"><div class="side">'+side+'</div><div class="main">'+main+'</div></div>'
+      : main;
+  } else if(D.layout==="twocol"){
+    body = '<div class="cols">'+parts.map(p=>p.html).join("")+'</div>';
+  } else {
+    body = parts.map(p=>p.html).join("");
+  }
+
+  let html = cvHead(D) + body;
+  if(S.lampiran && S.lampiran.length){
+    html += '<div class="pagebreak"></div><h2>'+H("lampiran")+'</h2>';
+    S.lampiran.forEach(p=>{
+      html += '<div class="blk"><h3>'+esc(p.judul||"Proyek")+'</h3>'
+        + (p.tautan?'<p class="meta">'+esc(p.tautan)+'</p>':"")
+        + '<p>'+esc(p.ringkas||"")+'</p></div>';
+    });
+  }
+  return html;
+}
+
+function paperClass(D){
+  const font = S.meta.font==="auto" ? D.font : ("f"+S.meta.font);
+  return "paper " + D.id + " " + font;
+}
+function renderPreview(){
+  const paper = $("#paper");
+  const D = design();
+  const surat = S.meta.doc==="surat";
+  paper.className = paperClass(D) + (surat?" letter":"");
+  $("#designNow").textContent = D.nama;
+  paper.style.setProperty("--doc", (COLORS.find(c=>c.id===S.meta.color)||COLORS[0]).hex);
+  paper.innerHTML = surat ? buildSurat() : buildCV();
+}
+
+/* teks murni untuk ATS, analisis, dan salin */
+function plainText(){
+  const c = S.data.kontak;
+  let t = [];
+  t.push(c.nama||""); if(c.posisi) t.push(c.posisi);
+  t.push(contactLine());
+  (ORDER[S.meta.template]||ORDER.umum).forEach(k=>{
+    if(!S.on[k]) return;
+    const v = S.data[k];
+    let body = [];
+    if(k==="ringkasan" && String(v||"").trim()) body.push(v.trim());
+    else if(Array.isArray(v)) v.filter(filled).forEach(it=>{
+      SECTIONS[k].fields.forEach(f=>{
+        const val = String(it[f.k]||"").trim();
+        if(!val) return;
+        if(f.t==="textarea") lines(val).forEach(p=>body.push("- "+p));
+        else body.push(val);
+      });
+    });
+    if(body.length){ t.push(""); t.push(H(k).toUpperCase()); t = t.concat(body); }
+  });
+  if(S.lampiran.length){
+    t.push(""); t.push(H("lampiran").toUpperCase());
+    S.lampiran.forEach(p=>{ t.push(p.judul||""); if(p.tautan) t.push(p.tautan); t.push(p.ringkas||""); });
+  }
+  return t.filter(x=>x!==undefined).join("\n").replace(/\n{3,}/g,"\n\n").trim();
+}
+
+/* =========================================================
+   6. METER KELENGKAPAN
+   ========================================================= */
+function sectionScore(k){
+  if(!S.on[k]) return 0;
+  const v = S.data[k];
+  if(SECTIONS[k].type==="text") return String(v||"").trim().length>40 ? 1 : (String(v||"").trim()?0.5:0);
+  if(SECTIONS[k].type==="single"){
+    const need = ["nama","telp","email"];
+    const got = need.filter(f=>String(v[f]||"").trim()).length;
+    return got/need.length;
+  }
+  const good = v.filter(filled).length;
+  return good>=2 ? 1 : (good===1 ? 0.6 : 0);
+}
+function renderGauge(){
+  let total = 0, active = 0;
+  const html = KEYS.map(k=>{
+    const s = S.on[k] ? sectionScore(k) : -1;
+    if(s>=0){ active++; total += s; }
+    const cls = s<0 ? "" : (s>=1 ? " on" : (s>0 ? " part" : ""));
+    return '<div class="tick'+cls+'" title="'+SECTIONS[k].label+'"></div>';
+  }).join("");
+  $("#scale").innerHTML = html;
+  const pct = active ? Math.round(total/active*100) : 0;
+  $("#gaugeVal").textContent = pct + "%";
+}
+
+/* =========================================================
+   7. PEMERIKSA RAMAH ATS
+   ========================================================= */
+function runATS(){
+  const out = [];
+  const c = S.data.kontak, txt = plainText();
+
+  if(!String(c.nama||"").trim()) out.push(["bad","Nama belum diisi","Pemindai ATS membaca nama dari baris pertama dokumen."]);
+  if(!String(c.email||"").trim()) out.push(["bad","Surel belum diisi","Tanpa surel, sistem perekrutan tidak dapat membalas lamaran."]);
+  else if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(c.email.trim())) out.push(["bad","Format surel keliru","Tulis dalam format nama@domain.com."]);
+  if(!String(c.telp||"").trim()) out.push(["warn","Nomor telepon belum diisi","Tambahkan nomor aktif dengan format 08xx-xxxx-xxxx."]);
+
+  let graphic = 0, tabular = 0, longLine = 0, allcaps = 0;
+  const scan = s=>{
+    const v = String(s||"");
+    if(GRAPHIC_TEST.test(v)) graphic++;
+    if(/<[^>]+>/.test(v)) graphic++;
+    if(/\t|\|/.test(v)) tabular++;
+    lines(v).forEach(l=>{ if(l.length>220) longLine++; if(l.length>18 && l===l.toUpperCase() && /[A-Z]{6}/.test(l)) allcaps++; });
+  };
+  KEYS.forEach(k=>{
+    const v = S.data[k];
+    if(typeof v==="string") scan(v);
+    else if(Array.isArray(v)) v.forEach(it=>Object.values(it).forEach(scan));
+    else Object.values(v).forEach(scan);
+  });
+
+  if(graphic) out.push(["bad","Elemen grafik terdeteksi ("+graphic+")","Gambar, ikon, dan simbol dekoratif tidak terbaca pemindai. Gantilah dengan teks biasa."]);
+  else out.push(["ok","Tidak ada elemen grafik","Seluruh isi berupa teks sederhana — aman untuk pemindaian."]);
+  if(tabular) out.push(["bad","Struktur menyerupai tabel ("+tabular+")","Tanda pemisah kolom dan tab membuat urutan kata teracak saat diurai. Pakai satu baris per poin."]);
+  if(longLine) out.push(["warn","Poin terlalu panjang ("+longLine+")","Pecah menjadi kalimat di bawah 220 karakter agar mudah diurai dan dibaca."]);
+  if(allcaps) out.push(["warn","Tulisan kapital seluruhnya ("+allcaps+")","Sebagian pemindai gagal mengenali istilah yang ditulis kapital penuh. Pakai huruf kapital di awal kata saja."]);
+
+  const secOn = KEYS.filter(k=>S.on[k]);
+  if(!S.on.keahlian) out.push(["warn","Bagian keahlian nonaktif","Sebagian besar sistem penyaringan mencari daftar keahlian sebagai penentu kecocokan."]);
+  if(!S.on.ringkasan) out.push(["warn","Ringkasan profil nonaktif","Ringkasan adalah tempat paling efektif menaruh kata kunci lowongan."]);
+  if(secOn.length<4) out.push(["warn","Bagian aktif hanya "+secOn.length,"CV yang terlalu ringkas jarang lolos ambang skor. Aktifkan minimal empat bagian."]);
+
+  const words = txt.split(/\s+/).filter(Boolean).length;
+  if(words<120) out.push(["warn","Isi masih pendek ("+words+" kata)","Sasaran wajar 350–650 kata untuk satu halaman."]);
+  else if(words>900) out.push(["warn","Isi terlalu panjang ("+words+" kata)","Pangkas ke pengalaman lima tahun terakhir yang relevan."]);
+  else out.push(["ok","Panjang dokumen wajar ("+words+" kata)","Sesuai untuk satu sampai dua halaman."]);
+
+  if(S.foto.on && S.foto.src) out.push(["warn","Foto profil aktif","Pemindai tidak membaca gambar — pastikan seluruh keterangan penting juga tertulis sebagai teks. Untuk lamaran lewat portal otomatis, matikan foto; untuk kiriman surel langsung, foto aman dipakai."]);
+  const D = design();
+  if(!D.ats) out.push(["warn","Desain “"+D.nama+"” berkolom","Tata letak berkolom kerap membuat pemindai membaca teks melintasi kolom. Untuk lamaran lewat portal otomatis, pilih desain berlabel ATS aman; simpan desain ini untuk kiriman surel langsung."]);
+  if(/\bsaya\b/i.test(txt)) out.push(["warn","Kata ganti orang pertama ditemukan","Pada CV, mulai poin langsung dengan kata kerja: “Merancang…”, “Menguji…”."]);
+
+  $("#atsOut").innerHTML = out.map(([t,h,b])=>'<div class="msg '+t+'"><b>'+esc(h)+'</b>'+esc(b)+'</div>').join("");
+  const bad = out.filter(o=>o[0]==="bad").length;
+  return bad;
+}
+
+/* =========================================================
+   8. ANALISIS KATA KUNCI
+   ========================================================= */
+const STOP = new Set(("yang dan di ke dari untuk dengan pada dalam atau ini itu akan telah sudah adalah sebagai oleh juga tidak dapat bisa agar serta para kami kita anda yg dll min max minimal maksimal memiliki mampu wajib diutamakan kandidat pelamar bagi atas jika saat lebih hanya sangat baik dll nya per about and or the a an to of in for with on at is are be will have has you we your our their as by from that this it not all any other more most such than then they them who which what when where how job role position company work working").split(" "));
+function tokens(t){
+  return String(t||"").toLowerCase().replace(/[^a-z0-9\u00C0-\u017F\s\-\/]/g," ")
+    .split(/[\s\/]+/).map(w=>w.replace(/^-+|-+$/g,""))
+    .filter(w=>w.length>2 && !STOP.has(w) && !/^\d+$/.test(w));
+}
+function analyseMatch(){
+  const jd = $("#jobdesc").value.trim();
+  if(!jd){ $("#matchOut").innerHTML = '<div class="msg warn"><b>Belum ada lowongan</b>Tempel deskripsi lowongan lebih dulu, lalu tekan hitung.</div>'; return; }
+  const freq = {};
+  tokens(jd).forEach(w=>freq[w]=(freq[w]||0)+1);
+  const cvWords = new Set(tokens(plainText()));
+  const cvText = plainText().toLowerCase();
+  const ranked = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,28).map(x=>x[0]);
+  const hit = ranked.filter(w=>cvWords.has(w) || cvText.includes(w));
+  const miss = ranked.filter(w=>!hit.includes(w));
+
+  /* frasa dua kata yang penting, mis. "constructed wetland", "air limbah" */
+  const jdl = jd.toLowerCase(), phrases = [];
+  const tk = tokens(jd);
+  for(let i=0;i<tk.length-1;i++){
+    const p = tk[i]+" "+tk[i+1];
+    if(jdl.split(p).length-1 >= 2 && !phrases.includes(p)) phrases.push(p);
+  }
+  const phraseHit = phrases.filter(p=>cvText.includes(p));
+
+  const base = ranked.length ? hit.length/ranked.length : 0;
+  const bonus = phrases.length ? (phraseHit.length/phrases.length)*0.15 : 0;
+  const score = Math.min(100, Math.round(base*85 + bonus*100));
+  const verdict = score>=75 ? ["ok","Kecocokan kuat","Lanjutkan. Perbaiki kata kunci sisa jika masih ada ruang."]
+    : score>=50 ? ["warn","Kecocokan sedang","Sisipkan kata kunci yang belum ada ke ringkasan dan poin pengalaman."]
+    : ["bad","Kecocokan rendah","Tulis ulang ringkasan memakai istilah yang dipakai lowongan ini."];
+
+  $("#matchOut").innerHTML =
+    '<div class="score"><b>'+score+'%</b><span>skor kecocokan · '+hit.length+' dari '+ranked.length+' kata kunci utama</span></div>'
+    + '<div class="meter"><i style="width:'+score+'%"></i></div>'
+    + '<div class="msg '+verdict[0]+'"><b>'+verdict[1]+'</b>'+verdict[2]+'</div>'
+    + '<div class="hint" style="margin-top:10px">Sudah ada di CV Anda</div>'
+    + '<div class="chips">'+(hit.length?hit.map(w=>'<span class="chip hit">'+esc(w)+'</span>').join(""):'<span class="chip miss">belum ada</span>')+'</div>'
+    + '<div class="hint">Belum ada — klik untuk menambahkan ke keahlian teknis</div>'
+    + '<div class="chips">'+miss.map(w=>'<span class="chip miss" data-addskill="'+esc(w)+'">+ '+esc(w)+'</span>').join("")+'</div>'
+    + (phrases.length?'<div class="hint">Frasa penting: '+phrases.map(p=>(phraseHit.includes(p)?"✓ ":"✗ ")+esc(p)).join(" · ")+'</div>':"");
+}
+function addSkill(word){
+  if(!S.on.keahlian){ S.on.keahlian = true; }
+  let row = S.data.keahlian.find(r=>/kata kunci/i.test(r.kategori||""));
+  if(!row){ row = emptyItem("keahlian"); row.kategori = "Kata kunci lowongan"; S.data.keahlian.push(row); }
+  const list = String(row.item||"").split(",").map(x=>x.trim()).filter(Boolean);
+  if(!list.some(x=>x.toLowerCase()===word.toLowerCase())) list.push(word);
+  row.item = list.join(", ");
+  refreshAll(true);
+  toast("“"+word+"” ditambahkan ke keahlian teknis.");
+}
+
+/* =========================================================
+   9. TEMPLATE KALIMAT PENCAPAIAN
+   ========================================================= */
+const ACHIEVE = {
+  analis:[
+    "Mengevaluasi kinerja aditif DFAP pada {0} sampel bahan bakar dan menaikkan nilai efisiensi pembakaran sebesar {1}%.",
+    "Menjalankan {0} pengujian mutu per bulan sesuai metode ASTM dengan tingkat ketepatan hasil {1}%.",
+    "Memangkas waktu penerbitan Laporan Hasil Uji dari {0} hari menjadi {1} hari melalui penyederhanaan alur verifikasi data.",
+    "Mengkalibrasi {0} unit instrumen analitik dan menurunkan penyimpangan hasil ulang di bawah {1}%.",
+    "Menyusun {0} prosedur kerja baku laboratorium yang lolos audit ISO 17025 tanpa temuan mayor."
+  ],
+  insinyur:[
+    "Mendesain sistem perpipaan memakai AutoCAD untuk {0} unit produksi dan memangkas kebutuhan material sebesar {1}%.",
+    "Memodelkan struktur rangka baja dengan SAP2000 hingga berat profil turun {0}% tanpa mengurangi faktor keamanan {1}.",
+    "Menyelesaikan {0} gambar kerja per bulan dengan tingkat revisi klien di bawah {1}%.",
+    "Memimpin perbaikan desain yang menekan biaya fabrikasi sebesar Rp{0} juta pada {1} proyek.",
+    "Mengintegrasikan {0} komponen standar ke pustaka desain sehingga waktu penggambaran berkurang {1}%."
+  ],
+  lingkungan:[
+    "Merancang unit constructed wetland berkapasitas {0} meter kubik per hari dan menurunkan kadar COD sebesar {1}%.",
+    "Mengoperasikan instalasi pengolahan air limbah dengan efisiensi penyisihan BOD {0}% selama {1} bulan berturut-turut.",
+    "Memantau {0} titik sampling air permukaan dan menyusun laporan kepatuhan lingkungan setiap {1} bulan.",
+    "Menekan biaya bahan kimia koagulan sebesar {0}% melalui uji jar test pada {1} variasi dosis.",
+    "Menyusun kajian pengelolaan limbah untuk {0} lokasi kerja dan menutup {1} temuan audit lingkungan."
+  ],
+  qc:[
+    "Mengawasi {0} lot produksi per bulan dan menjaga tingkat produk tidak sesuai di bawah {1}%.",
+    "Menutup {0} temuan audit internal dalam {1} hari kerja melalui tindakan korektif terverifikasi.",
+    "Menyusun {0} dokumen mutu dan mengantar sertifikasi ISO 9001 lolos pada tinjauan pertama, {1} temuan minor.",
+    "Melatih {0} operator produksi hingga tingkat kepatuhan prosedur naik menjadi {1}%."
+  ],
+  umum:[
+    "Mengelola {0} berkas dokumen teknis per bulan dengan ketepatan penyerahan {1}%.",
+    "Menyederhanakan alur kerja administrasi sehingga waktu proses turun dari {0} jam menjadi {1} jam.",
+    "Mengoordinasikan {0} anggota tim lintas bagian untuk menyelesaikan {1} kegiatan tepat waktu."
+  ]
+};
+function renderTemplates(){
+  const role = $("#tplRole").value;
+  $("#tplList").innerHTML = ACHIEVE[role].map((s,i)=>{
+    let html = esc(s).replace(/\{(\d)\}/g, (m,n)=>'<input class="num-inline" data-tplnum="'+i+':'+n+'" value="'+(n==="0"?"12":"25")+'">');
+    return '<div class="sentence" data-tplrow="'+i+'"><div data-tpltext="'+i+'">'+html+'</div>'
+      + '<div class="rowbtns" style="margin-top:7px">'
+      + '<button class="btn tiny" data-tplcopy="'+i+'">Salin kalimat</button>'
+      + '<button class="btn tiny primary" data-tplins="'+i+'">Sisipkan ke pengalaman</button></div></div>';
+  }).join("");
+}
+function tplSentence(i){
+  const row = $('[data-tplrow="'+i+'"]');
+  let out = "";
+  row.querySelector('[data-tpltext]').childNodes.forEach(n=>{
+    out += n.nodeType===3 ? n.textContent : (n.value||"");
+  });
+  return out.replace(/\s+/g," ").trim();
+}
+
+/* =========================================================
+   10. RINGKASAN OTOMATIS + SARAN KEAHLIAN
+   ========================================================= */
+const SKILL_MAP = [
+  {re:/constructed wetland|lahan basah|fitoremediasi/i, skills:["Pengolahan air limbah","Desain constructed wetland","Analisis BOD dan COD","Fitoremediasi","Perhitungan waktu tinggal hidrolik"]},
+  {re:/sap2000|etabs|struktur|rangka baja/i, skills:["SAP2000","ETABS","Analisis struktur","Perhitungan pembebanan SNI 1727","Desain baja dan beton"]},
+  {re:/autocad|gambar kerja|drafting|solidworks|inventor/i, skills:["AutoCAD","SolidWorks","Gambar kerja teknik","Pemodelan 3D","Toleransi geometri"]},
+  {re:/laboratorium|pengujian|sampel|analis|astm|titrasi/i, skills:["Metode uji ASTM","Kalibrasi instrumen","Titrasi dan gravimetri","Kromatografi gas","Pengendalian mutu hasil uji"]},
+  {re:/iso|audit|mutu|kalibrasi|17025|9001/i, skills:["ISO/IEC 17025","ISO 9001","Audit internal","Penyusunan prosedur kerja","Ketertelusuran pengukuran"]},
+  {re:/limbah|ipal|wwtp|koagulan|jar test/i, skills:["Operasi IPAL","Jar test koagulan","Pemantauan baku mutu air","Pengelolaan limbah B3"]},
+  {re:/produksi|lot|batch|operator/i, skills:["Pengendalian proses produksi","Statistical process control","Pelatihan operator"]},
+  {re:/data|excel|python|spreadsheet|dashboard/i, skills:["Excel lanjutan","Pengolahan data","Python untuk analisis data","Visualisasi data"]},
+  {re:/k3|hse|safety|keselamatan/i, skills:["Keselamatan dan kesehatan kerja","Identifikasi bahaya (HIRADC)","Investigasi insiden"]},
+  {re:/gliserin|destilasi|bleaching|pemurnian|minyak/i, skills:["Destilasi vakum","Proses bleaching","Pemurnian bahan kimia","Neraca massa proses"]}
+];
+function refreshSkillSuggest(){
+  const text = S.data.pengalaman.map(it=>Object.values(it).join(" ")).join(" ") + " " + (S.data.ringkasan||"");
+  const have = new Set(S.data.keahlian.flatMap(r=>String(r.item||"").split(",").map(x=>x.trim().toLowerCase())));
+  const found = [];
+  SKILL_MAP.forEach(m=>{ if(m.re.test(text)) m.skills.forEach(s=>{ if(!have.has(s.toLowerCase()) && !found.includes(s)) found.push(s); }); });
+  $("#skillSuggest").innerHTML = found.length
+    ? '<div class="chips">'+found.map(s=>'<span class="chip miss" data-addskill="'+esc(s)+'">+ '+esc(s)+'</span>').join("")+'</div>'
+    : '<div class="msg ok"><b>Belum ada saran baru</b>Tulis rincian pekerjaan Anda pada bagian pengalaman kerja — saran keterampilan muncul dari kata kunci yang Anda ketik.</div>';
+  /* isi pilihan keahlian untuk pembuat ringkasan */
+  const pool = Array.from(new Set(
+    S.data.keahlian.flatMap(r=>String(r.item||"").split(",").map(x=>x.trim()).filter(Boolean)).concat(found)
+  ));
+  ["#sk1","#sk2","#sk3"].forEach((sel,i)=>{
+    const el = $(sel), cur = el.value;
+    el.innerHTML = '<option value="">— pilih —</option>'+pool.map(p=>'<option'+(p===cur?" selected":"")+'>'+esc(p)+'</option>').join("");
+    if(!cur && pool[i]) el.value = pool[i];
+  });
+}
+function buildSummary(){
+  const s = [$("#sk1").value,$("#sk2").value,$("#sk3").value].filter(Boolean);
+  if(s.length<3){ toast("Pilih tepat tiga keahlian teknis utama.", true); return; }
+  const role = $("#skRole").value.trim() || S.data.kontak.posisi || "profesional teknis";
+  const yr = $("#skYears").value.trim();
+  const edu = S.data.pendidikan.find(filled);
+  const eduTxt = edu && edu.institusi ? " Lulusan "+edu.institusi+(edu.jurusan?" jurusan "+edu.jurusan:"")+"." : "";
+  const exp = yr ? "berpengalaman "+yr+" tahun " : "";
+  const txt = role.charAt(0).toUpperCase()+role.slice(1)+" "+exp+"dengan penguasaan "+s[0]+", "+s[1]+", dan "+s[2]+". "
+    + "Terbiasa menerjemahkan kebutuhan teknis menjadi hasil kerja yang terukur, mulai dari perencanaan, pelaksanaan, hingga pelaporan."
+    + eduTxt + " Mencari peran yang menuntut ketelitian data dan kepatuhan terhadap prosedur mutu.";
+  S.data.ringkasan = txt; S.on.ringkasan = true;
+  $("#summaryOut").innerHTML = '<div class="out">'+esc(txt)+'</div><div class="hint">Ringkasan sudah dimasukkan ke CV. Anda bisa menyuntingnya di tab Bagian CV.</div>';
+  refreshAll(true);
+}
+
+/* =========================================================
+   11. PEMERIKSA EJAAN (lokal)
+   ========================================================= */
+const TYPOS = {"praktek":"praktik","analisa":"analisis","analisanya":"analisisnya","resiko":"risiko","kwalitas":"kualitas","kwantitas":"kuantitas","sistim":"sistem","standart":"standar","standarisasi":"standardisasi","aktifitas":"aktivitas","apotik":"apotek","jadual":"jadwal","nasehat":"nasihat","ijin":"izin","karir":"karier","managemen":"manajemen","tehnik":"teknik","tehnologi":"teknologi","komplek":"kompleks","obyek":"objek","subyek":"subjek","propinsi":"provinsi","nomer":"nomor","silahkan":"silakan","disini":"di sini","dimana":"di mana","kedepan":"ke depan","terimakasih":"terima kasih","frekwensi":"frekuensi","konkrit":"konkret","kongkret":"konkret","hutang":"utang","rubah":"ubah","merubah":"mengubah","difinisi":"definisi","efektifitas":"efektivitas","produktifitas":"produktivitas","kreatifitas":"kreativitas","sekedar":"sekadar","antri":"antre","atlit":"atlet","katagori":"kategori","hakekat":"hakikat","metoda":"metode","pebruari":"Februari","nopember":"November","teoritis":"teoretis","koordinir":"koordinasi","legalisir":"legalisasi","laboratorim":"laboratorium","laporn":"laporan","pengunaan":"penggunaan","dgn":"dengan"};
+function spellCheck(){
+  const text = plainText();
+  const found = {};
+  text.toLowerCase().replace(/[^a-z\u00C0-\u017F\s]/g," ").split(/\s+/).forEach(w=>{
+    if(TYPOS[w]) found[w] = TYPOS[w];
+  });
+  const dbl = (text.match(/\b(\w+)\s+\1\b/gi)||[]).slice(0,5);
+  const spc = (text.match(/  +/g)||[]).length;
+  let html = "";
+  const list = Object.entries(found);
+  if(list.length) html += '<div class="msg bad"><b>'+list.length+' ejaan perlu diperbaiki</b>'
+    + list.map(function(p){ return "“"+p[0]+"” → “"+p[1]+"”"; }).join(" · ") + '</div>';
+  if(dbl.length) html += '<div class="msg warn"><b>Kata berulang</b>'+esc(dbl.join(", "))+'</div>';
+  if(spc) html += '<div class="msg warn"><b>Spasi ganda ('+spc+')</b>Rapikan agar penguraian teks bersih.</div>';
+  if(!html) html = '<div class="msg ok"><b>Tidak ada kesalahan umum</b>Kamus dasar tidak menemukan salah ketik yang sering muncul. Gunakan pemeriksaan AI untuk cakupan lebih luas.</div>';
+  $("#spellOut").innerHTML = html;
+}
+
+
+
+/* =========================================================
+   FOTO PROFIL (opsional)
+   ========================================================= */
+function fotoPanel(){
+  const F = S.foto;
+  return '<div class="fotopanel">'
+    + '<div class="fotoprev">'+(F.src?'<img src="'+F.src+'" alt="Pratinjau pasfoto">':'belum ada foto')+'</div>'
+    + '<div class="fotoopt">'
+    + '<label class="chk'+(F.on&&F.src?" active":"")+'" style="margin-bottom:9px"><input type="checkbox" id="fotoOn"'+(F.on?" checked":"")+'>'
+    + '<span>Tampilkan foto pada CV <b style="font-weight:normal;color:var(--graphite)">(opsional)</b></span></label>'
+    + '<div class="rowbtns" style="margin-bottom:9px">'
+    + '<button class="btn tiny primary" id="btnFoto">'+(F.src?"Ganti foto":"Unggah foto")+'</button>'
+    + (F.src?'<button class="btn tiny danger" id="btnFotoHapus">Hapus foto</button>':"")
+    + '</div>'
+    + '<div class="grid3">'
+    + '<label class="f"><span>Bentuk</span><select data-foto="bentuk">'
+      + ['persegi:Persegi','bulat:Bulat','kartu:Pasfoto 3x4'].map(o=>{const [v,l]=o.split(":");
+        return '<option value="'+v+'"'+(F.bentuk===v?" selected":"")+'>'+l+'</option>';}).join("")+'</select></label>'
+    + '<label class="f"><span>Ukuran</span><select data-foto="ukuran">'
+      + ['kecil:Kecil','sedang:Sedang','besar:Besar'].map(o=>{const [v,l]=o.split(":");
+        return '<option value="'+v+'"'+(F.ukuran===v?" selected":"")+'>'+l+'</option>';}).join("")+'</select></label>'
+    + '<label class="f"><span>Letak</span><select data-foto="posisi">'
+      + ['kanan:Kanan nama','kiri:Kiri nama','tengah:Atas, di tengah'].map(o=>{const [v,l]=o.split(":");
+        return '<option value="'+v+'"'+(F.posisi===v?" selected":"")+'>'+l+'</option>';}).join("")+'</select></label>'
+    + '</div>'
+    + '<div class="hint" style="margin:0">Foto ikut tersimpan di dalam berkas proyek .js dan tampil pada unduhan PDF. Untuk lamaran lewat portal otomatis, sebaiknya matikan — pemindai tidak membaca gambar.</div>'
+    + '</div><input type="file" id="fotoIn" accept="image/*" hidden></div>';
+}
+function fotoHtml(){
+  const F = S.foto;
+  if(!F.on || !F.src) return "";
+  return '<div class="fotobox f-'+F.bentuk+' s-'+F.ukuran+'"><img src="'+F.src+'" alt="Pasfoto '+esc(S.data.kontak.nama||"pelamar")+'"></div>';
+}
+function muatFoto(file){
+  if(!file) return;
+  if(!/^image\//.test(file.type)){ toast("Pilih berkas gambar (JPG atau PNG).", true); return; }
+  const r = new FileReader();
+  r.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const maks = 520;
+      let w = img.width, h = img.height;
+      const skala = Math.min(1, maks/Math.max(w,h));
+      w = Math.round(w*skala); h = Math.round(h*skala);
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      const cx = cv.getContext("2d");
+      cx.fillStyle = "#fff"; cx.fillRect(0,0,w,h);
+      cx.drawImage(img, 0, 0, w, h);
+      let out;
+      try{ out = cv.toDataURL("image/jpeg", 0.82); }catch(e){ out = String(r.result); }
+      S.foto.src = out; S.foto.on = true;
+      renderForms(); lightRefresh();
+      toast("Foto ditambahkan. Bentuk, ukuran, dan letaknya bisa diatur di bawah.");
+    };
+    img.onerror = ()=>toast("Gambar tidak terbaca. Coba berkas JPG atau PNG lain.", true);
+    img.src = String(r.result);
+  };
+  r.onerror = ()=>toast("Berkas gagal dibaca.", true);
+  r.readAsDataURL(file);
+}
+
+/* =========================================================
+   SURAT LAMARAN
+   ========================================================= */
+const BERKAS = ["Daftar riwayat hidup (CV)","Fotokopi ijazah terakhir","Transkrip nilai","Fotokopi kartu tanda penduduk",
+  "Pasfoto terbaru","Sertifikat pendukung","Portofolio proyek","Surat keterangan pengalaman kerja"];
+const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+function tanggalKini(){ const d = new Date(); return d.getDate()+" "+BULAN[d.getMonth()]+" "+d.getFullYear(); }
+
+function renderLampCheck(){
+  $("#lampList").innerHTML = BERKAS.map((b,i)=>
+    '<label class="chk'+(S.surat.berkas.includes(b)?" active":"")+'"><input type="checkbox" data-berkas="'+i+'"'
+    + (S.surat.berkas.includes(b)?" checked":"") + '><span>'+esc(b)+'</span></label>').join("");
+}
+function renderSuratForm(){
+  $$("[data-surat]").forEach(el=>{ el.value = S.surat[el.dataset.surat] || ""; });
+  renderLampCheck();
+}
+
+function suratFakta(){
+  const c = S.data.kontak;
+  const edu = S.data.pendidikan.filter(filled)[0] || {};
+  const exp = S.data.pengalaman.filter(filled)[0] || {};
+  const poin = lines(exp.poin).slice(0,2);
+  const skills = S.data.keahlian.flatMap(r=>String(r.item||"").split(",").map(x=>x.trim()).filter(Boolean)).slice(0,4);
+  return {
+    nama: String(c.nama||"").trim() || "[nama Anda]",
+    kota: String(c.kota||"").trim(),
+    telp: String(c.telp||"").trim(),
+    email: String(c.email||"").trim(),
+    pendidikan: [edu.jenjang, edu.jurusan].filter(Boolean).join(" ") + (edu.institusi?" — "+edu.institusi:""),
+    posisiTerakhir: exp.posisi || "",
+    perusahaanTerakhir: exp.perusahaan || "",
+    poin, skills, edu, exp
+  };
+}
+
+function susunIsi(){
+  const S1 = S.surat, f = suratFakta();
+  const posisi = S1.posisi || "posisi yang tersedia";
+  const perusahaan = S1.perusahaan || "perusahaan Bapak/Ibu";
+  const sumber = S1.sumber || "informasi lowongan yang saya terima";
+  const en = S1.jenis === "cover_en";
+  const p = [];
+
+  if(en){
+    p.push("I am writing to apply for the "+posisi+" position at "+perusahaan+", which I learned about through "+sumber+".");
+    p.push((f.posisiTerakhir? "As "+f.posisiTerakhir+(f.perusahaanTerakhir?" at "+f.perusahaanTerakhir:"")+", I "
+      + (f.poin.length? f.poin.map(x=>x.charAt(0).toLowerCase()+x.slice(1)).join("; and I ") : "handled technical work end to end")+"."
+      : "My academic and project work has prepared me for this role.")
+      + (f.skills.length? " I work regularly with "+f.skills.join(", ")+"." : ""));
+    p.push((f.pendidikan? "I hold a background in "+f.pendidikan+". ":"")
+      + "I would welcome the chance to discuss how this experience fits your team's needs"
+      + (S1.mulai? ", and I am available to start "+S1.mulai : "") + ".");
+    if(S1.catatan) p.push(S1.catatan);
+    return p.join("\n\n");
+  }
+
+  const nada = S1.nada;
+  const buka = nada==="hangat"
+    ? "Membaca "+sumber+" mengenai lowongan "+posisi+" di "+perusahaan+", saya merasa peran tersebut sejalan dengan arah karier yang sedang saya bangun. Melalui surat ini saya mengajukan lamaran untuk posisi tersebut."
+    : nada==="lugas"
+    ? "Melalui surat ini saya melamar posisi "+posisi+" di "+perusahaan+", sesuai "+sumber+"."
+    : "Berdasarkan "+sumber+" mengenai lowongan "+posisi+" di "+perusahaan+", dengan ini saya bermaksud mengajukan lamaran untuk posisi tersebut.";
+  p.push(buka);
+
+  let peng = "";
+  if(f.posisiTerakhir){
+    peng = "Saya pernah bekerja sebagai "+f.posisiTerakhir+(f.perusahaanTerakhir?" di "+f.perusahaanTerakhir:"")+". ";
+    if(f.poin.length) peng += "Pada peran tersebut saya "+f.poin.map(x=>x.charAt(0).toLowerCase()+x.slice(1)).join(", serta ")+".";
+  } else if(f.pendidikan){
+    peng = "Latar pendidikan saya pada "+f.pendidikan+" membekali saya dengan dasar teknis yang relevan untuk posisi ini.";
+  }
+  if(f.skills.length) peng += (peng?" ":"")+"Keahlian yang saya kuasai meliputi "+f.skills.join(", ")+".";
+  if(peng) p.push(peng);
+
+  let tutup = nada==="lugas"
+    ? "Saya siap mengikuti proses seleksi"+(S1.mulai?" dan dapat mulai bekerja "+S1.mulai:"")+"."
+    : "Besar harapan saya untuk memperoleh kesempatan wawancara agar dapat menjelaskan kontribusi yang bisa saya berikan"
+      + (S1.mulai?". Saya siap mulai bekerja "+S1.mulai:"") + ".";
+  if(S1.catatan) tutup = S1.catatan+" "+tutup;
+  p.push(tutup);
+  return p.join("\n\n");
+}
+
+function suratBlok(){
+  const S1 = S.surat, f = suratFakta(), en = S1.jenis==="cover_en";
+  const kota = S1.kota || f.kota || "";
+  const tgl = S1.tanggal || tanggalKini();
+  const isi = String(S1.isi||"").trim() || susunIsi();
+  const tuju = [];
+  if(en){
+    tuju.push(S1.penerima ? "Dear "+S1.penerima+"," : "Dear Hiring Manager,");
+  } else {
+    tuju.push("Yth. " + (S1.penerima || (S1.jabatanPenerima || "Bapak/Ibu Pimpinan Bagian Sumber Daya Manusia")));
+    if(S1.penerima && S1.jabatanPenerima) tuju.push(S1.jabatanPenerima);
+    if(S1.perusahaan) tuju.push(S1.perusahaan);
+    if(S1.alamat) tuju.push(S1.alamat);
+  }
+  return {
+    kota, tgl, isi, tuju, en, f,
+    hal: en ? "" : "Hal\t\t: Lamaran Pekerjaan" + (S1.posisi?" — "+S1.posisi:""),
+    lamp: en ? "" : "Lampiran\t: " + (S1.berkas.length ? S1.berkas.length+" berkas" : "—"),
+    salam: en ? "" : "Dengan hormat,",
+    penutup: en ? "Sincerely," : "Hormat saya,"
+  };
+}
+
+function buildSurat(){
+  const B = suratBlok(), S1 = S.surat, f = B.f;
+  const dataDiri = (S1.jenis==="lamaran") ? '<div class="datadiri">'
+      + '<span>Nama&nbsp;&nbsp;: '+esc(f.nama)+'</span>'
+      + (f.pendidikan?'<span>Pendidikan&nbsp;&nbsp;: '+esc(f.pendidikan)+'</span>':"")
+      + (f.kota?'<span>Domisili&nbsp;&nbsp;: '+esc(f.kota)+'</span>':"")
+      + (f.telp?'<span>Telepon&nbsp;&nbsp;: '+esc(f.telp)+'</span>':"")
+      + (f.email?'<span>Surel&nbsp;&nbsp;: '+esc(f.email)+'</span>':"")
+      + '</div>' : "";
+  const lampiran = (!B.en && S1.berkas.length && S1.jenis!=="email")
+    ? '<p>Sebagai bahan pertimbangan, saya lampirkan berkas berikut:</p><ol class="lamp">'
+      + S1.berkas.map(b=>'<li>'+esc(b)+'</li>').join("") + '</ol>' : "";
+  const paras = B.isi.split(/\n\s*\n/).map(x=>'<p>'+esc(x.trim()).replace(/\n/g,"<br>")+'</p>').join("");
+
+  let html = "";
+  if(S1.jenis!=="email") html += '<p class="tgl">'+esc([B.kota, B.tgl].filter(Boolean).join(", "))+'</p>';
+  if(B.hal) html += '<p class="hal">'+esc(B.hal).replace(/\t/g,"&nbsp;&nbsp;")+'<br>'+esc(B.lamp).replace(/\t/g,"&nbsp;&nbsp;")+'</p>';
+  html += '<p class="tuju">'+B.tuju.map(esc).join("<br>")+'</p>';
+  if(B.salam) html += '<p>'+B.salam+'</p>';
+  if(S1.jenis==="lamaran"){
+    html += paras.split("</p>")[0]+"</p>";
+    html += '<p>Berikut data singkat mengenai diri saya:</p>'+dataDiri;
+    html += paras.split("</p>").slice(1).join("</p>");
+  } else {
+    html += paras;
+  }
+  html += lampiran;
+  html += '<p style="margin-top:18px">'+B.penutup+'</p><p class="ttd">'+esc(f.nama)+'</p>';
+  return html;
+}
+function suratText(){
+  const tmp = document.createElement("div");
+  tmp.innerHTML = buildSurat().replace(/<\/p>/g,"</p>\n").replace(/<br>/g,"\n").replace(/<\/li>/g,"</li>\n").replace(/<\/span>/g,"</span>\n");
+  return tmp.textContent.replace(/\n{3,}/g,"\n\n").replace(/[ \u00A0]+/g," ").trim();
+}
+function docHtmlSurat(){
+  const font = (S.meta.font==="serif"||design().font==="fserif") ? "Georgia, serif" : "Arial, sans-serif";
+  return '<html><head><meta charset="utf-8"><style>@page{margin:2.5cm}body{font-family:'+font+';font-size:11pt;line-height:1.6}'
+    + 'p{margin:0 0 10pt} .tgl{text-align:right} .ttd{margin-top:40pt;font-weight:bold} .datadiri span{display:block}'
+    + ' ol{margin:0 0 10pt 18pt} h1,h2{display:none}</style></head><body>'+buildSurat()+'</body></html>';
+}
+function suratNamaBerkas(){
+  const jenis = S.surat.jenis==="cover_en" ? "Cover_Letter" : (S.surat.jenis==="email" ? "Surel_Lamaran" : "Surat_Lamaran");
+  return fileBase().replace(/^CV_/, jenis+"_");
+}
+async function polishSurat(){
+  const el = $("#suratOut");
+  busy(el, true, "Memperhalus surat…");
+  try{
+    const S1 = S.surat;
+    const txt = await ai("Perbaiki surat lamaran berikut agar mengalir wajar, sopan, dan meyakinkan"
+      + (S1.jenis==="cover_en" ? " in professional English" : " dalam bahasa Indonesia formal")
+      + ". Pertahankan seluruh fakta, jangan menambah pengalaman atau angka yang tidak ada. Maksimal empat paragraf. "
+      + "Balas hanya paragraf isinya, tanpa tanggal, alamat, salam pembuka, maupun tanda tangan.\n\nPosisi: "+(S1.posisi||"-")
+      + "\nPerusahaan: "+(S1.perusahaan||"-")+"\n\nIsi saat ini:\n"+(S1.isi||susunIsi())+"\n\nRingkasan CV:\n"+plainText().slice(0,2000));
+    S.surat.isi = txt;
+    $('[data-surat="isi"]').value = txt;
+    el.innerHTML = '<div class="msg ok"><b>Surat diperhalus</b>Periksa kembali fakta dan nama sebelum mengirim.</div>';
+    if(S.meta.doc==="surat") renderPreview();
+  }catch(e){ aiFail(el, e); }
+}
+
+/* =========================================================
+   12. PEMANGGIL AI
+   ========================================================= */
+async function ai(prompt, opts){
+  opts = opts||{};
+  const body = {model:"claude-sonnet-4-6", max_tokens:1000, messages:[{role:"user", content:prompt}]};
+  if(opts.tools) body.tools = opts.tools;
+  const r = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)
+  });
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  const d = await r.json();
+  return (d.content||[]).map(b=>b.type==="text"?b.text:"").filter(Boolean).join("\n").trim();
+}
+function busy(el, on, label){
+  el.innerHTML = on ? '<div class="out"><span class="spin"></span>'+(label||"Sedang diproses…")+'</div>' : "";
+}
+function aiFail(el, e){
+  el.innerHTML = '<div class="msg bad"><b>Fitur AI tidak dapat dijalankan</b>'
+    + 'Sambungan ke layanan AI gagal ('+esc(e.message||e)+'). Fitur ini hanya berjalan saat berkas dibuka di lingkungan yang menyediakan akses AI. '
+    + 'Semua fitur lain — analisis kata kunci, pemeriksa ATS, template kalimat, unduhan — tetap berjalan penuh.</div>';
+}
+
+/* =========================================================
+   13. UNDUHAN
+   ========================================================= */
+function docHtml(){
+  const color = (COLORS.find(c=>c.id===S.meta.color)||COLORS[0]).hex;
+  const D = design();
+  const baseFont = S.meta.font==="auto" ? D.font : ("f"+S.meta.font);
+  const font = baseFont==="fserif" ? "Georgia, serif" : "Arial, sans-serif";
+  const extra = (DOC_CSS[D.id]||"").split("%C%").join(color);
+  return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8">'
+    + '<style>@page{margin:2cm} body{font-family:'+font+';font-size:11pt;line-height:1.4;color:#111}'
+    + 'h1{font-size:18pt;margin:0 0 2pt;color:'+color+'} h2{font-size:11pt;text-transform:uppercase;letter-spacing:1pt;color:'+color
+    + ';border-bottom:1pt solid '+color+';padding-bottom:2pt;margin:14pt 0 6pt} h3{font-size:11.5pt;margin:0}'
+    + '.role{font-weight:bold;margin:0 0 4pt} .contact{margin:0 0 6pt;font-size:10pt} .meta{font-size:10pt;color:#333;margin:0 0 3pt}'
+    + 'ul{margin:3pt 0 8pt 16pt} li{margin-bottom:2pt} p{margin:0 0 6pt} .empty{display:none} '
+    + '.cvside,.cols{display:block} .cvside .side{background:#F1F5F4;padding:8pt;margin-bottom:10pt} '
+    + '.fotobox{float:right;width:2.4cm;margin:0 0 6pt 10pt} .fotobox img{width:100%} '
+    + '.cvhead{overflow:hidden} '
+    + extra + '</style></head><body>'
+    + buildCV().replace(/<div class="pagebreak"><\/div>/g,'<br style="page-break-before:always">') + '</body></html>';
+}
+function dl(name, content, mime){
+  const b = new Blob(["\ufeff", content], {type:mime});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();}, 1500);
+}
+function fileBase(){
+  const n = String(S.data.kontak.nama||"CV").replace(/[^\w\s-]/g,"").trim().replace(/\s+/g,"_") || "CV";
+  return "CV_"+n;
+}
+function toPdf(){
+  $("#printroot").innerHTML = '<div class="'+paperClass(design())+(S.meta.doc==="surat"?" letter":"")+'" style="--doc:'
+    + (COLORS.find(c=>c.id===S.meta.color)||COLORS[0]).hex + '">'+(S.meta.doc==="surat"?buildSurat():buildCV())+'</div>';
+  toast("Pada kotak cetak, pilih tujuan “Simpan sebagai PDF”.");
+  setTimeout(()=>{ try{ window.print(); }catch(e){ toast("Cetak tidak tersedia di jendela ini. Gunakan menu Cetak pada peramban.", true); } }, 350);
+}
+
+/* =========================================================
+   14. PENYIMPANAN
+   ========================================================= */
+const mem = new Map();
+const hasStore = typeof window.storage!=="undefined" && window.storage;
+const store = {
+  async get(k, shared){ 
+    if(!hasStore){ return mem.has(k)?JSON.parse(mem.get(k)):null; }
+    try{ const r = await window.storage.get(k, !!shared); return r? JSON.parse(r.value) : null; }catch(e){ return null; }
+  },
+  async set(k, v, shared){
+    if(!hasStore){ mem.set(k, JSON.stringify(v)); return true; }
+    try{ await window.storage.set(k, JSON.stringify(v), !!shared); return true; }catch(e){ return false; }
+  },
+  async list(p, shared){
+    if(!hasStore){ return Array.from(mem.keys()).filter(k=>k.startsWith(p)); }
+    try{ const r = await window.storage.list(p, !!shared); return r? r.keys : []; }catch(e){ return []; }
+  }
+};
+function projectFile(){
+  return '/* Berkas proyek BikinCV by Tama. Jangan disunting manual. */\n'
+    + '/* Buka melalui tombol "Buka proyek" pada aplikasi BikinCV. */\n'
+    + '/* Disimpan: ' + new Date().toLocaleString("id-ID") + ' */\n'
+    + 'BIKINCV_PROYEK = ' + JSON.stringify(S, null, 2) + ';\n';
+}
+function saveProject(){
+  const nama = fileBase().replace(/^CV_/,"") ;
+  dl("Proyek_BikinCV_"+nama+".js", projectFile(), "text/javascript");
+  const el = $("#saveOut");
+  if(el) el.innerHTML = '<div class="msg ok"><b>Berkas proyek diunduh</b>Simpan berkas ini baik-baik — ia berisi seluruh isian Anda. Untuk melanjutkan di perangkat lain, buka BikinCV di sana lalu tekan “Buka proyek dari berkas”.</div>';
+  toast("Berkas proyek diunduh. Simpan untuk dibuka di perangkat lain.");
+}
+function openProject(){ $("#fileIn").click(); }
+function parseProject(raw){
+  const a = raw.indexOf("{"), b = raw.lastIndexOf("}");
+  if(a<0 || b<a) throw new Error("format tidak dikenali");
+  return JSON.parse(raw.slice(a, b+1));
+}
+async function restoreAuto(){
+  const d = await store.get("cv:autosave");
+  const el = $("#saveOut");
+  if(!d){ el.innerHTML = '<div class="msg warn"><b>Tidak ada draf otomatis</b>Draf otomatis hanya tersimpan selama peramban ini belum ditutup. Untuk arsip yang bertahan, pakai “Simpan proyek”.</div>'; return; }
+  S = migrate(d); refreshAll();
+  el.innerHTML = '<div class="msg ok"><b>Draf otomatis dipulihkan</b>Segera tekan “Simpan proyek” agar tersimpan permanen sebagai berkas.</div>';
+}
+function migrate(d){
+  const base = blank();
+  base.meta = Object.assign(base.meta, d.meta||{});
+  KEYS.forEach(k=>{ if(d.on && k in d.on) base.on[k] = d.on[k]; if(d.data && d.data[k]!==undefined) base.data[k] = d.data[k]; });
+  base.lampiran = d.lampiran||[]; base.share = d.share||null;
+  if(d.surat) base.surat = Object.assign(base.surat, d.surat);
+  if(d.foto) base.foto = Object.assign(base.foto, d.foto);
+  return base;
+}
+
+/* =========================================================
+   15. PENGIKAT PERISTIWA
+   ========================================================= */
+function refreshAll(keepForms){
+  renderChecklist();
+  renderForms();
+  renderPreview(); renderGauge(); runATS(); refreshSkillSuggest();
+  renderSuratForm();
+  $("#docMode").value = S.meta.doc || "cv";
+  $("#tplIndustry").value = S.meta.template;
+  $("#docFont").value = S.meta.font;
+  renderSwatches();
+  if(!$("#pane-desain").hidden) renderDesigns();
+}
+function lightRefresh(){ renderPreview(); renderGauge(); runATS(); refreshSkillSuggest(); }
+
+function renderDesigns(){
+  const color = (COLORS.find(c=>c.id===S.meta.color)||COLORS[0]).hex;
+  $("#gallery").innerHTML = DESIGNS.map(D=>{
+    const cls = "paper " + D.id + " " + (S.meta.font==="auto" ? D.font : "f"+S.meta.font);
+    return '<button class="dcard" data-design="'+D.id+'" aria-pressed="'+(S.meta.design===D.id)+'" title="'+esc(D.ket)+'">'
+      + '<div class="dthumb"><div class="'+cls+'" style="--doc:'+color+'">'+buildCV(D.id)+'</div></div>'
+      + '<div class="dmeta">'+esc(D.nama)+'<em class="'+(D.ats?"":"risk")+'">'+(D.ats?"ATS aman":"berisiko ATS")+'</em></div></button>';
+  }).join("");
+}
+function renderSwatches(){
+  $("#swatches").innerHTML = COLORS.map(c=>'<button class="sw" title="'+c.label+'" data-color="'+c.id+'" style="background:'+c.hex+'" aria-pressed="'+(S.meta.color===c.id)+'"></button>').join("");
+}
+
+/* input pada formulir */
+document.addEventListener("input", e=>{
+  const t = e.target;
+  if(t.dataset.sec){
+    const {sec, idx, key} = t.dataset;
+    const clean = sanitize(t.value);
+    if(clean.dirty){
+      t.value = clean.v;
+      toast("Elemen grafik atau tabel ditolak — CV harus berupa teks sederhana agar lolos pemindaian ATS.", true);
+    }
+    if(SECTIONS[sec].type==="text") S.data[sec] = clean.v;
+    else if(idx==="-1") S.data[sec][key] = clean.v;
+    else S.data[sec][+idx][key] = clean.v;
+    lightRefresh();
+  }
+});
+document.addEventListener("input", e=>{
+  const t = e.target;
+  if(t.dataset.surat){
+    const clean = sanitize(t.value);
+    if(clean.dirty){ t.value = clean.v; toast("Elemen grafik ditolak — surat harus berupa teks sederhana.", true); }
+    S.surat[t.dataset.surat] = clean.v;
+    if(S.meta.doc==="surat") renderPreview();
+  }
+});
+document.addEventListener("change", e=>{
+  const t = e.target;
+  if(t.dataset.surat && (t.tagName==="SELECT")){
+    S.surat[t.dataset.surat] = t.value;
+    if(t.dataset.surat==="jenis" || t.dataset.surat==="nada"){
+      S.surat.isi = susunIsi();
+      const ta = $('[data-surat="isi"]'); if(ta) ta.value = S.surat.isi;
+    }
+    if(S.meta.doc==="surat") renderPreview();
+  }
+  if(t.dataset.berkas!==undefined){
+    const b = BERKAS[+t.dataset.berkas];
+    if(t.checked){ if(!S.surat.berkas.includes(b)) S.surat.berkas.push(b); }
+    else S.surat.berkas = S.surat.berkas.filter(x=>x!==b);
+    t.closest(".chk").classList.toggle("active", t.checked);
+    if(S.meta.doc==="surat") renderPreview();
+  }
+  if(t.id==="docMode"){ S.meta.doc = t.value; renderPreview(); }
+  if(t.id==="fotoOn"){
+    S.foto.on = t.checked;
+    t.closest(".chk").classList.toggle("active", t.checked && !!S.foto.src);
+    if(t.checked && !S.foto.src) $("#fotoIn").click();
+    lightRefresh();
+  }
+  if(t.dataset.foto){ S.foto[t.dataset.foto] = t.value; lightRefresh(); }
+  if(t.id==="fotoIn"){ muatFoto(t.files[0]); t.value = ""; }
+  if(t.dataset.toggle){
+    S.on[t.dataset.toggle] = t.checked;
+    if(t.checked && Array.isArray(S.data[t.dataset.toggle]) && !S.data[t.dataset.toggle].length)
+      S.data[t.dataset.toggle].push(emptyItem(t.dataset.toggle));
+    refreshAll();
+  }
+  if(t.id==="tplIndustry"){ S.meta.template = t.value; lightRefresh(); toast("Tata letak diganti ke template "+t.options[t.selectedIndex].text.toLowerCase()+"."); }
+  if(t.id==="docFont"){ S.meta.font = t.value; renderPreview(); if(!$("#pane-desain").hidden) renderDesigns(); }
+  if(t.id==="tplRole") renderTemplates();
+});
+
+/* klik umum */
+document.addEventListener("click", async e=>{
+  const t = e.target.closest("button, .chip");
+  if(!t) return;
+
+  if(t.dataset.pane){
+    $$(".tab").forEach(x=>x.setAttribute("aria-selected", x.dataset.pane===t.dataset.pane));
+    ["bagian","desain","surat","alat","periksa"].forEach(p=>$("#pane-"+p).hidden = (p!==t.dataset.pane));
+    if(t.dataset.pane==="desain"){ renderDesigns(); document.body.className = "view-edit"; }
+    window.scrollTo(0,0);
+    return;
+  }
+  if(t.dataset.design){
+    S.meta.design = t.dataset.design;
+    renderPreview(); renderDesigns(); runATS();
+    toast("Desain diganti ke “"+design().nama+"”.");
+    return;
+  }
+  if(t.dataset.view){ document.body.className = "view-"+t.dataset.view; window.scrollTo(0,0); return; }
+  if(t.dataset.color){ S.meta.color = t.dataset.color; renderPreview(); renderSwatches(); if(!$("#pane-desain").hidden) renderDesigns(); return; }
+  if(t.dataset.add){ S.data[t.dataset.add].push(emptyItem(t.dataset.add)); renderForms(); lightRefresh(); return; }
+  if(t.dataset.del){
+    const [k,i] = t.dataset.del.split(":");
+    S.data[k].splice(+i,1); renderForms(); lightRefresh(); return;
+  }
+  if(t.dataset.move){
+    const [k,i,dir] = t.dataset.move.split(":");
+    const arr = S.data[k], a = +i, b = a + (+dir);
+    if(b>=0 && b<arr.length){ const tmp = arr[a]; arr[a]=arr[b]; arr[b]=tmp; renderForms(); lightRefresh(); }
+    return;
+  }
+  if(t.dataset.addskill){ addSkill(t.dataset.addskill); return; }
+  if(t.dataset.tplcopy!==undefined && t.dataset.tplcopy!==""){
+    copy(tplSentence(t.dataset.tplcopy)); return;
+  }
+  if(t.dataset.tplins!==undefined && t.dataset.tplins!==""){
+    const s = tplSentence(t.dataset.tplins);
+    if(!S.data.pengalaman.length) S.data.pengalaman.push(emptyItem("pengalaman"));
+    const it = S.data.pengalaman[0];
+    it.poin = (it.poin ? it.poin.replace(/\s*$/,"")+"\n" : "") + s;
+    S.on.pengalaman = true;
+    refreshAll(); toast("Kalimat disisipkan ke pengalaman pertama.");
+    return;
+  }
+
+  switch(t.id){
+    case "btnMatch": analyseMatch(); break;
+    case "btnSummary": buildSummary(); break;
+    case "btnSpell": spellCheck(); break;
+    case "btnWord":
+      if(S.meta.doc==="surat"){ dl(suratNamaBerkas()+".doc", docHtmlSurat(), "application/msword"); toast("Surat diunduh dalam bentuk Word."); }
+      else {
+        dl(fileBase()+".doc", docHtml(), "application/msword");
+        toast(S.foto.on && S.foto.src
+          ? "CV diunduh. Bila foto tidak muncul di Word, pakai unduhan PDF."
+          : "CV diunduh dalam bentuk Word.");
+      }
+      break;
+    case "btnPdf": toPdf(); break;
+    case "btnTxt": copy(S.meta.doc==="surat" ? suratText() : plainText()); break;
+    case "btnSave": case "btnSave2": saveProject(); break;
+    case "btnOpen": case "btnOpen2": openProject(); break;
+    case "btnAuto": restoreAuto(); break;
+    case "btnFoto": $("#fotoIn").click(); break;
+    case "btnFotoHapus":
+      S.foto.src = ""; renderForms(); lightRefresh(); toast("Foto dihapus dari CV.");
+      break;
+    case "btnSurat":{
+      S.surat.isi = susunIsi();
+      $('[data-surat="isi"]').value = S.surat.isi;
+      S.meta.doc = "surat"; $("#docMode").value = "surat"; renderPreview();
+      $("#suratOut").innerHTML = '<div class="msg ok"><b>Surat tersusun</b>Isi diambil dari data CV Anda. Sunting bebas pada kotak di atas — panel kanan ikut berubah.</div>'
+        + (S.surat.jenis==="cover_en" && S.meta.lang==="id"
+           ? '<div class="msg warn"><b>Isi CV masih berbahasa Indonesia</b>Kerangka surat sudah berbahasa Inggris, tetapi kalimat pengalaman diambil apa adanya dari CV. Terjemahkan CV lebih dahulu di tab Alat bantu, atau tekan “Perhalus dengan AI” agar seluruh isinya menjadi bahasa Inggris.</div>'
+           : "");
+      break;
+    }
+    case "btnSuratAI": polishSurat(); break;
+    case "btnSuratLihat": S.meta.doc = "surat"; $("#docMode").value = "surat"; renderPreview(); toast("Panel kanan menampilkan surat."); break;
+    case "btnSuratWord": dl(suratNamaBerkas()+".doc", docHtmlSurat(), "application/msword"); toast("Surat diunduh dalam bentuk Word."); break;
+    case "btnSuratPdf": S.meta.doc="surat"; $("#docMode").value="surat"; renderPreview(); toPdf(); break;
+    case "btnSuratTxt": copy(suratText()); break;
+    case "btnReset":
+      if(confirm("Kosongkan seluruh formulir? Tindakan ini tidak dapat dibatalkan.")){ S = blank(); refreshAll(); toast("Formulir dikosongkan."); }
+      break;
+    case "btnPortoManual":{
+      S.lampiran.push({judul:"Proyek baru", tautan:$("#portoUrl").value.trim(), ringkas:"Tulis ringkasan proyek di sini."});
+      renderLampiran(); lightRefresh(); break;
+    }
+    case "btnPorto": pullPortfolio(); break;
+    case "btnTranslate": translateCV(); break;
+    case "btnRestore": restoreCV(); break;
+    case "btnCover": coverLetter(); break;
+    case "btnCoverDl": dl(fileBase()+"_Surat_Lamaran.doc", coverHtml(), "application/msword"); break;
+    case "btnInterview": interview(); break;
+    case "btnSummaryAI": polishSummary(); break;
+    case "btnSpellAI": spellAI(); break;
+    case "btnPublish": publish(); break;
+    case "btnStats": stats(); break;
+    case "btnOpenShared": openShared(); break;
+  }
+});
+$("#fileIn").addEventListener("change", ev=>{
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      S = migrate(parseProject(String(r.result)));
+      refreshAll();
+      toast("Proyek dimuat dari berkas.");
+      const el = $("#saveOut"); if(el) el.innerHTML = '<div class="msg ok"><b>Proyek dimuat</b>Isian, desain, warna, dan surat lamaran Anda sudah kembali seperti terakhir disimpan.</div>';
+    }catch(err){
+      toast("Berkas tidak terbaca — pastikan itu berkas proyek BikinCV.", true);
+      const el = $("#saveOut"); if(el) el.innerHTML = '<div class="msg bad"><b>Berkas tidak terbaca</b>Pilih berkas berakhiran .js yang dibuat oleh tombol “Simpan proyek”, bukan berkas lain.</div>';
+    }
+  };
+  r.readAsText(f); ev.target.value = "";
+});
+function copy(text){
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(()=>toast("Teks murni disalin ke papan klip.")).catch(()=>fallbackCopy(text));
+  } else fallbackCopy(text);
+}
+function fallbackCopy(text){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); toast("Teks murni disalin."); }catch(e){ toast("Salin gagal — pilih teks secara manual.", true); }
+  ta.remove();
+}
+
+/* =========================================================
+   16. FITUR BER-AI
+   ========================================================= */
+async function polishSummary(){
+  const el = $("#summaryOut");
+  const s = [$("#sk1").value,$("#sk2").value,$("#sk3").value].filter(Boolean);
+  if(s.length<3){ toast("Pilih tiga keahlian dahulu.", true); return; }
+  busy(el, true, "Menyusun ringkasan…");
+  try{
+    const txt = await ai("Tulis satu paragraf ringkasan profil CV dalam bahasa Indonesia formal, 3-4 kalimat, tanpa kata ganti orang pertama, ramah pemindai ATS. "
+      + "Posisi dituju: "+($("#skRole").value||S.data.kontak.posisi||"profesional teknis")+". Pengalaman: "+($("#skYears").value||"-")+" tahun. "
+      + "Tiga keahlian utama: "+s.join(", ")+". Konteks CV:\n"+plainText().slice(0,1500)
+      + "\nBalas hanya paragraf ringkasannya, tanpa pengantar.");
+    S.data.ringkasan = txt; S.on.ringkasan = true;
+    el.innerHTML = '<div class="out">'+esc(txt)+'</div>';
+    refreshAll();
+  }catch(e){ aiFail(el, e); }
+}
+async function spellAI(){
+  const el = $("#spellOut");
+  busy(el, true, "Memeriksa seluruh teks…");
+  try{
+    const txt = await ai("Periksa ejaan dan tata bahasa Indonesia pada teks CV berikut. Daftar setiap kesalahan dengan format: salah → benar, satu per baris. "
+      + "Jika tidak ada kesalahan, tulis: Tidak ditemukan kesalahan. Jangan menulis penjelasan lain.\n\n"+plainText().slice(0,4000));
+    el.innerHTML = '<div class="out">'+esc(txt)+'</div>';
+  }catch(e){ aiFail(el, e); }
+}
+async function pullPortfolio(){
+  const el = $("#portoOut"), url = $("#portoUrl").value.trim();
+  if(!url){ toast("Masukkan tautan profil terlebih dahulu.", true); return; }
+  busy(el, true, "Mencari data proyek publik…");
+  try{
+    const txt = await ai("Cari halaman profil publik ini dan proyek yang tercantum di dalamnya: "+url
+      + "\nRingkas maksimal empat proyek. Balas HANYA JSON array tanpa penjelasan dan tanpa pagar kode, format: "
+      + '[{"judul":"","tautan":"","ringkas":"dua kalimat bahasa Indonesia"}]. Jika halaman tidak ditemukan, balas [].',
+      {tools:[{type:"web_search_20250305", name:"web_search"}]});
+    const clean = txt.replace(/```json|```/g,"").trim();
+    const arr = JSON.parse(clean.slice(clean.indexOf("["), clean.lastIndexOf("]")+1));
+    if(!arr.length){ el.innerHTML = '<div class="msg warn"><b>Data proyek tidak ditemukan</b>Profil mungkin tidak publik atau belum terindeks. Gunakan “Tambah proyek manual”.</div>'; return; }
+    S.lampiran = S.lampiran.concat(arr);
+    if(!S.on.portofolio){ S.on.portofolio = true; }
+    const row = emptyItem("portofolio"); row.nama = "Profil portofolio"; row.tautan = url;
+    S.data.portofolio.push(row);
+    renderLampiran(); refreshAll();
+    toast(arr.length+" proyek ditambahkan sebagai halaman lampiran.");
+  }catch(e){ aiFail(el, e); }
+}
+function renderLampiran(){
+  const el = $("#portoOut");
+  el.innerHTML = S.lampiran.length
+    ? S.lampiran.map((p,i)=>'<div class="item"><div class="head"><b>Lampiran '+(i+1)+'</b><span class="spacer"></span>'
+      + '<button class="btn tiny danger" data-dellamp="'+i+'">Hapus</button></div>'
+      + '<label class="f"><span>Judul</span><input type="text" data-lamp="'+i+':judul" value="'+esc(p.judul||"")+'"></label>'
+      + '<label class="f"><span>Tautan</span><input type="text" data-lamp="'+i+':tautan" value="'+esc(p.tautan||"")+'"></label>'
+      + '<label class="f"><span>Ringkasan</span><textarea data-lamp="'+i+':ringkas">'+esc(p.ringkas||"")+'</textarea></label></div>').join("")
+    : '<div class="hint">Belum ada lampiran proyek.</div>';
+}
+document.addEventListener("input", e=>{
+  if(e.target.dataset.lamp){
+    const [i,k] = e.target.dataset.lamp.split(":");
+    S.lampiran[+i][k] = sanitize(e.target.value).v;
+    lightRefresh();
+  }
+});
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-dellamp]");
+  if(b){ S.lampiran.splice(+b.dataset.dellamp,1); renderLampiran(); lightRefresh(); }
+});
+
+async function translateCV(){
+  const el = $("#trOut");
+  busy(el, true, "Menerjemahkan isi CV…");
+  try{
+    const payload = JSON.stringify({kontak:S.data.kontak, ringkasan:S.data.ringkasan, pengalaman:S.data.pengalaman,
+      pendidikan:S.data.pendidikan, keahlian:S.data.keahlian, sertifikasi:S.data.sertifikasi, penghargaan:S.data.penghargaan,
+      organisasi:S.data.organisasi, publikasi:S.data.publikasi, bahasa:S.data.bahasa, portofolio:S.data.portofolio, referensi:S.data.referensi});
+    const txt = await ai("Terjemahkan seluruh nilai teks pada JSON CV berikut dari bahasa Indonesia ke bahasa Inggris profesional untuk lamaran kerja. "
+      + "Pertahankan struktur kunci JSON persis sama. Jangan terjemahkan nama orang, nama institusi, nama perangkat lunak, dan nomor. "
+      + "Balas HANYA JSON, tanpa pagar kode dan tanpa penjelasan.\n\n"+payload);
+    const clean = txt.replace(/```json|```/g,"").trim();
+    const obj = JSON.parse(clean.slice(clean.indexOf("{"), clean.lastIndexOf("}")+1));
+    BACKUP_ID = JSON.parse(JSON.stringify(S.data));
+    Object.keys(obj).forEach(k=>{ if(S.data[k]!==undefined) S.data[k] = obj[k]; });
+    S.meta.lang = "en";
+    $("#btnRestore").disabled = false;
+    el.innerHTML = '<div class="msg ok"><b>CV versi Inggris siap</b>Judul bagian dan isi sudah berbahasa Inggris. Periksa nama institusi sebelum mengirim.</div>';
+    refreshAll();
+  }catch(e){ aiFail(el, e); }
+}
+function restoreCV(){
+  if(!BACKUP_ID) return;
+  S.data = BACKUP_ID; S.meta.lang = "id"; BACKUP_ID = null;
+  $("#btnRestore").disabled = true; $("#trOut").innerHTML = "";
+  refreshAll(); toast("Versi Indonesia dikembalikan.");
+}
+
+let COVER = "";
+function coverHtml(){
+  return '<html><head><meta charset="utf-8"><style>@page{margin:2.5cm}body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.5}</style></head><body>'
+    + COVER.split("\n").map(p=>'<p>'+esc(p)+'</p>').join("") + '</body></html>';
+}
+async function coverLetter(){
+  const el = $("#coverOut");
+  const comp = $("#clCompany").value.trim(), role = $("#clRole").value.trim();
+  if(!comp || !role){ toast("Isi nama perusahaan dan posisi.", true); return; }
+  busy(el, true, "Menyusun surat lamaran…");
+  try{
+    COVER = await ai("Tulis surat lamaran kerja bahasa Indonesia yang formal dan ringkas (maksimal 300 kata) untuk posisi "+role+" di "+comp+". "
+      + "Gunakan data CV berikut, sebutkan dua pencapaian paling relevan, dan tutup dengan ajakan wawancara. "
+      + "Balas hanya isi suratnya, dimulai dari salam pembuka.\n\nCV:\n"+plainText().slice(0,3000));
+    el.innerHTML = '<div class="out">'+esc(COVER)+'</div>';
+    $("#btnCoverDl").disabled = false;
+  }catch(e){ aiFail(el, e); }
+}
+async function interview(){
+  const el = $("#interviewOut");
+  busy(el, true, "Menyusun pertanyaan…");
+  try{
+    const txt = await ai("Berperanlah sebagai perekrut. Dari CV berikut, susun tepat tiga pertanyaan wawancara yang spesifik. "
+      + "Satu pertanyaan wajib menggali proses kerja pelamar saat memakai salah satu perangkat lunak atau metode yang ia cantumkan. "
+      + "Untuk setiap pertanyaan, tambahkan satu baris 'Yang dinilai:' berisi hal yang dicari perekrut. Balas dalam bahasa Indonesia, tanpa pengantar.\n\nCV:\n"+plainText().slice(0,3000));
+    el.innerHTML = '<div class="out">'+esc(txt)+'</div>';
+  }catch(e){ aiFail(el, e); }
+}
+
+/* =========================================================
+   17. TERBIT & PELACAK KUNJUNGAN
+   ========================================================= */
+function code(){ return "cv-" + Math.random().toString(36).slice(2,8); }
+async function publish(){
+  const el = $("#pubOut");
+  const id = S.share || code();
+  const prev = await store.get("cv:pub:"+id, true);
+  const ok = await store.set("cv:pub:"+id, {data:S, views: prev?prev.views:0, at: Date.now()}, true);
+  if(!ok){ el.innerHTML = '<div class="msg bad"><b>Penerbitan gagal</b>Penyimpanan bersama tidak tersedia di lingkungan ini. Kirim berkas PDF sebagai gantinya.</div>'; return; }
+  S.share = id;
+  el.innerHTML = '<div class="msg ok"><b>CV terbit</b>Kode tautan Anda: <b style="display:inline">'+id+'</b>. '
+    + 'Bagikan kode ini kepada perekrut — mereka membukanya lewat kolom “Buka CV terbitan orang lain”. Setiap pembukaan tercatat.</div>';
+  toast("CV terbit dengan kode "+id);
+}
+async function stats(){
+  const el = $("#pubOut");
+  if(!S.share){ el.innerHTML = '<div class="msg warn"><b>Belum diterbitkan</b>Tekan “Terbitkan CV” lebih dahulu.</div>'; return; }
+  const rec = await store.get("cv:pub:"+S.share, true);
+  el.innerHTML = '<div class="msg ok"><b>Kode '+S.share+'</b>Jumlah kunjungan: '+((rec&&rec.views)||0)+'. Terakhir diterbitkan '+ (rec? new Date(rec.at).toLocaleString("id-ID") : "-") +'.</div>';
+}
+async function openShared(){
+  const el = $("#pubOut"), id = $("#openCode").value.trim();
+  if(!id){ toast("Masukkan kode CV.", true); return; }
+  const rec = await store.get("cv:pub:"+id, true);
+  if(!rec){ el.innerHTML = '<div class="msg bad"><b>Kode tidak ditemukan</b>Periksa kembali penulisan kode.</div>'; return; }
+  rec.views = (rec.views||0)+1;
+  await store.set("cv:pub:"+id, rec, true);
+  S = migrate(rec.data); S.share = id; refreshAll();
+  el.innerHTML = '<div class="msg ok"><b>CV dibuka</b>Kunjungan ke-'+rec.views+' tercatat untuk kode '+esc(id)+'.</div>';
+}
+
+/* =========================================================
+   18. MULAI
+   ========================================================= */
+(function init(){
+  /* contoh isian awal agar pratinjau tidak kosong */
+  S.data.kontak.nama = "";
+  S.surat.tanggal = tanggalKini();
+  refreshAll();
+  renderTemplates();
+  renderLampiran();
+  window.addEventListener("beforeprint", ()=>{
+    if(!$("#printroot").innerHTML) $("#printroot").innerHTML = '<div class="'+paperClass(design())+(S.meta.doc==="surat"?" letter":"")+'">'+(S.meta.doc==="surat"?buildSurat():buildCV())+'</div>';
+  });
+  /* simpan otomatis tiap 45 detik */
+  setInterval(()=>{ store.set("cv:autosave", S); }, 45000);
+})();
+</script>
+</body>
+</html>
